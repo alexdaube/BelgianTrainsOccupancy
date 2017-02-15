@@ -91,9 +91,6 @@ class Station:
     def __init__(self, stations_data):
         self.number = strip_uri_last_element(stations_data[0])
         self.name = stations_data[1]
-        self.longitutde = stations_data[7]
-        self.latitude = stations_data[8]
-        self.stop_time_avg = stations_data[9]
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
