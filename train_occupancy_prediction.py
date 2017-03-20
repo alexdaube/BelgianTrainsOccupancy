@@ -23,13 +23,20 @@ def main():
 
     occupancies = filter_duplicates(filter_erroneous(occupancies))
 
-    agate_table_object = []
-    for occupancy in occupancies:
-        agate_table_object.append(occupancy.to_dict())
+    column_names = ['date', 'weekday', "from", "to", "vehicle", "vehicle_type", "occupancy"]
 
-    occupancy_table = agate.Table.from_object(agate_table_object)
-    occupancy_table.print_csv()
+    column_types = [agate.DateTime(), agate.Text(), agate.Number(), agate.Number(), agate.Text(), agate.Text(),
+                    agate.Text()]
+
+    occupancies_list = []
+    for occupancy in occupancies:
+        occupancies_list.append(occupancy.to_list())
+
+    occupancy_table = agate.Table(occupancies_list, column_names, column_types)
+    occupancy_table.print_json()
     print("Number of records after merging duplicates: ", len(occupancies))
+
+    agate.Text
 
 
 if __name__ == "__main__":
