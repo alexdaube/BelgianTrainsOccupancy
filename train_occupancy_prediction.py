@@ -28,7 +28,17 @@ def main():
         occupancies_list.append(occupancy.to_list())
 
     occupancy_table = agate.Table(occupancies_list, column_names, column_types)
-    occupancy_table.print_csv()
+
+    entries_per_day = occupancy_table.pivot(['weekday'])
+
+    monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
+    tuesday_results = occupancy_table.where(lambda row: 'TUESDAY' == row['weekday'])
+    wednesday_results = occupancy_table.where(lambda row: 'WEDNESDAY' == row['weekday'])
+    thursday_results = occupancy_table.where(lambda row: 'THURSDAY' == row['weekday'])
+    friday_results = occupancy_table.where(lambda row: 'FRIDAY' == row['weekday'])
+    saturday_results = occupancy_table.where(lambda row: 'SATURDAY' == row['weekday'])
+    sunday_results = occupancy_table.where(lambda row: 'SUNDAY' == row['weekday'])
+
     print("Number of records after merging duplicates: ", len(occupancies))
 
 
