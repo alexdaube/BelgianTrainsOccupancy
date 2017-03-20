@@ -9,11 +9,6 @@ STATIONS_DATA_FILE = 'stations.csv'
 
 
 def main():
-    # occupancies = agate.Table.from_csv('trains_train.csv')
-    #
-    # occupancies.print_csv()
-    # print(occupancies)
-
     occupancies_raw_data = parse_json_file_to_list(OCCUPANCY_DATA_FILE)
     stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
 
@@ -33,10 +28,8 @@ def main():
         occupancies_list.append(occupancy.to_list())
 
     occupancy_table = agate.Table(occupancies_list, column_names, column_types)
-    occupancy_table.print_json()
+    occupancy_table.print_csv()
     print("Number of records after merging duplicates: ", len(occupancies))
-
-    agate.Text
 
 
 if __name__ == "__main__":
