@@ -31,3 +31,8 @@ def filter_duplicates(occupancies):
         tmp_occupancies.append(occupancies_list[0])
 
     return tmp_occupancies
+
+
+def removeDate(row):
+    data = row['date']
+    print(data)

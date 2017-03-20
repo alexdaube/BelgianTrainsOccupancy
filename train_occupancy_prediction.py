@@ -39,7 +39,9 @@ def main():
     saturday_results = occupancy_table.where(lambda row: 'SATURDAY' == row['weekday'])
     sunday_results = occupancy_table.where(lambda row: 'SUNDAY' == row['weekday'])
 
-    print("Number of records after merging duplicates: ", len(occupancies))
+    # monday_results.order_by('date').print_table(max_rows=2000, max_columns=15)
+
+    monday_results.group_by('occupancy').order_by('date').merge().print_table(max_rows=2000, max_columns=15)
 
 
 if __name__ == "__main__":
