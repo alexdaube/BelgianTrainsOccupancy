@@ -75,3 +75,13 @@ class Occupancy:
             "Date: {0} WeekDay: {1} From: {2} To: {3} Vehicle: {4} Vehicle Type: {5} Occupancy: {6}".format(
                 self.date, Weekday(self.weekday).name, entering_station, exiting_station,
                 self.vehicle.number, self.vehicle.type.name, occupancy_level))
+
+    def to_dict(self):
+        entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
+        exiting_station = self.exiting_station if self.exiting_station is None else self.exiting_station.number
+        occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
+            self.occupancy_level).name
+
+        return {"Date": self.date, "WeekDay": Weekday(self.weekday).name,
+                "From": entering_station, "To": exiting_station, "Vehicle": self.vehicle.number,
+                "Vehicle Type": self.vehicle.type.name, "Occupancy": occupancy_level}
