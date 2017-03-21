@@ -12,7 +12,6 @@ STATIONS_DATA_FILE = 'stations.csv'
 
 
 def main():
-
     occupancies_raw_data = parse_json_file_to_list(OCCUPANCY_DATA_FILE)
     stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
 
@@ -48,8 +47,9 @@ def main():
 
     occupancy_table = agate.Table(occupancies_list, column_names, column_types)
 
-
-    occupancy_table.pivot('to_urban', 'occupancy').print_csv()
+    occupancy_table.where(lambda row: 'FRIDAY' == row['weekday']).pivot('from_urban', 'occupancy').print_csv()
+    print("\n")
+    occupancy_table.where(lambda row: 'SUNDAY' == row['weekday']).pivot('to_urban', 'occupancy').print_csv()
     #
     # print("\nOCCUPANCY BY VEHICLE_TYPE => \n")
     # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "THA")
@@ -73,7 +73,7 @@ def main():
     #     t.print_csv()
     #
     # # entries_per_day = occupancy_table.pivot(['weekday'])
-    # #
+    # #git s
     # monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
     # tuesday_results = occupancy_table.where(lambda row: 'TUESDAY' == row['weekday'])
     # wednesday_results = occupancy_table.where(lambda row: 'WEDNESDAY' == row['weekday'])
