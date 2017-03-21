@@ -84,6 +84,11 @@ class Occupancy:
 
         fake_date = datetime(1999, 1, 1, self.date.hour, self.date.minute, 0, 0)
 
-        return [fake_date, Weekday(self.weekday).name,
+        if self.date.hour < 10:
+            hours = "0" + str(self.date.hour)
+        else:
+            hours = str(self.date.hour)
+
+        return [fake_date, hours, Weekday(self.weekday).name,
                 entering_station, exiting_station, self.vehicle.number,
                 self.vehicle.type.name, occupancy_level]
