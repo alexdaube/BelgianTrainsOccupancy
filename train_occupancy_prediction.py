@@ -65,12 +65,19 @@ def main():
     # Possible to inspect datetime object with lambda...
     new_table = monday_results.where(lambda row: 6 <= row['date'].hour <= 8)
 
+    print("\n############MONDAY###############")
     analyzeDay(monday_results)
+    print("\n############TUESDAY###############")
     analyzeDay(tuesday_results)
+    print("\n############WEDNESDAY###############")
     analyzeDay(wednesday_results)
+    print("\n############THURSDAY###############")
     analyzeDay(thursday_results)
+    print("\n############FRIDAY###############")
     analyzeDay(friday_results)
+    print("\n############SATURDAY###############")
     analyzeDay(saturday_results)
+    print("\n############SUNDAY###############")
     analyzeDay(sunday_results)
     # high_occ = monday_results.where(lambda row: 'HIGH' == row['occupancy'])
     #
