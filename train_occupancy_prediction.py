@@ -1,4 +1,5 @@
 from algos.pre_processing import filter_duplicates, filter_erroneous
+from algos.statistics import *
 from domain.occupancy import Occupancy
 from domain.station import Station
 from utils.file_utils import parse_csv_file_to_list, parse_json_file_to_list
@@ -29,19 +30,35 @@ def main():
 
     occupancy_table = agate.Table(occupancies_list, column_names, column_types)
 
-    entries_per_day = occupancy_table.pivot(['weekday'])
+    print("\nOCCUPANCY BY VEHICLE_TYPE => \n")
+    percent_occupancy_for_column(occupancy_table, 'vehicle_type', "THA")
+    percent_occupancy_for_column(occupancy_table, 'vehicle_type', "IC")
+    percent_occupancy_for_column(occupancy_table, 'vehicle_type', "L")
+    percent_occupancy_for_column(occupancy_table, 'vehicle_type', "S")
+    percent_occupancy_for_column(occupancy_table, 'vehicle_type', "P")
 
-    monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
-    tuesday_results = occupancy_table.where(lambda row: 'TUESDAY' == row['weekday'])
-    wednesday_results = occupancy_table.where(lambda row: 'WEDNESDAY' == row['weekday'])
-    thursday_results = occupancy_table.where(lambda row: 'THURSDAY' == row['weekday'])
-    friday_results = occupancy_table.where(lambda row: 'FRIDAY' == row['weekday'])
-    saturday_results = occupancy_table.where(lambda row: 'SATURDAY' == row['weekday'])
-    sunday_results = occupancy_table.where(lambda row: 'SUNDAY' == row['weekday'])
+    print("\nOCCUPANCY BY WEEKDAY => \n")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "MONDAY")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "TUESDAY")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "WEDNESDAY")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "THURSDAY")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "FRIDAY")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "SATURDAY")
+    percent_occupancy_for_column(occupancy_table, 'weekday', "SUNDAY")
 
-    # monday_results.order_by('date').print_table(max_rows=2000, max_columns=15)
-
-    monday_results.group_by('occupancy').order_by('date').merge().print_table(max_rows=2000, max_columns=15)
+    # entries_per_day = occupancy_table.pivot(['weekday'])
+    #
+    # monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
+    # tuesday_results = occupancy_table.where(lambda row: 'TUESDAY' == row['weekday'])
+    # wednesday_results = occupancy_table.where(lambda row: 'WEDNESDAY' == row['weekday'])
+    # thursday_results = occupancy_table.where(lambda row: 'THURSDAY' == row['weekday'])
+    # friday_results = occupancy_table.where(lambda row: 'FRIDAY' == row['weekday'])
+    # saturday_results = occupancy_table.where(lambda row: 'SATURDAY' == row['weekday'])
+    # sunday_results = occupancy_table.where(lambda row: 'SUNDAY' == row['weekday'])
+    #
+    # # monday_results.order_by('date').print_table(max_rows=2000, max_columns=15)
+    #
+    # monday_results.group_by('occupancy').order_by('date').merge().print_table(max_rows=2000, max_columns=15)
 
 
 if __name__ == "__main__":
