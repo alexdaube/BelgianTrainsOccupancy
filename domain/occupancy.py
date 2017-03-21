@@ -72,9 +72,9 @@ class Occupancy:
         occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
             self.occupancy_level).name
         print(
-            "Date: {0} WeekDay: {1} From: {2} To: {3} Vehicle: {4} Vehicle Type: {5} Occupancy: {6}".format(
-                self.date, Weekday(self.weekday).name, entering_station, exiting_station,
-                self.vehicle.number, self.vehicle.type.name, occupancy_level))
+            "Date: {0} WeekDay: {1} From: {2} From in city?: {3} To: {4} To in city?: {5} Vehicle: {6} Vehicle Type: {7} Occupancy: {8}".format(
+                self.date, Weekday(self.weekday).name, entering_station, self.entering_station.in_city, exiting_station,
+                self.exiting_station.in_city, self.vehicle.number, self.vehicle.type.name, occupancy_level))
 
     def to_list(self):
         entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
@@ -90,5 +90,6 @@ class Occupancy:
             hours = str(self.date.hour)
 
         return [fake_date, hours, Weekday(self.weekday).name,
-                entering_station, exiting_station, self.vehicle.number,
+                entering_station, self.entering_station.in_city, exiting_station, self.exiting_station.in_city,
+                self.vehicle.number,
                 self.vehicle.type.name, occupancy_level]
