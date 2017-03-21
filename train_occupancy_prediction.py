@@ -48,6 +48,11 @@ def main():
     percent_occupancy_for_column(occupancy_table, 'weekday', "SATURDAY")
     percent_occupancy_for_column(occupancy_table, 'weekday', "SUNDAY")
 
+    g_by = occupancy_table.group_by("to")
+    for t in g_by:
+        print("\n")
+        t.print_csv()
+
     # entries_per_day = occupancy_table.pivot(['weekday'])
     #
     monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
