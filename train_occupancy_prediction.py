@@ -45,6 +45,12 @@ def main():
     new_table = monday_results.where(lambda row: 6 <= row['date'].hour <= 8)
 
     analyzeDay(monday_results)
+    analyzeDay(tuesday_results)
+    analyzeDay(wednesday_results)
+    analyzeDay(thursday_results)
+    analyzeDay(friday_results)
+    analyzeDay(saturday_results)
+    analyzeDay(sunday_results)
     # high_occ = monday_results.where(lambda row: 'HIGH' == row['occupancy'])
     #
     # low = monday_results.where(lambda row: 'LOW' == row['occupancy'])
