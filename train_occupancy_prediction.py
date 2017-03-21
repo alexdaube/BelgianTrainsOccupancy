@@ -33,11 +33,12 @@ def main():
 
     occupancies = filter_duplicates(filter_erroneous(occupancies))
 
-    column_names = ['date', 'hour', 'weekday', "from", "from_urban", "to", "to_urban", "vehicle", "vehicle_type",
+    column_names = ['date', 'hour', 'weekday', "from", "from_urban", "to", "to_urban", "in_morning_rush",
+                    "in_evening_rush", "vehicle", "vehicle_type",
                     "occupancy"]
 
     column_types = [agate.DateTime(), agate.Number(), agate.Text(), agate.Number(), agate.Number(), agate.Number(),
-                    agate.Number(), agate.Text(),
+                    agate.Number(), agate.Number(), agate.Number(), agate.Text(),
                     agate.Text(),
                     agate.Text()]
 
@@ -47,9 +48,33 @@ def main():
 
     occupancy_table = agate.Table(occupancies_list, column_names, column_types)
 
+    occupancy_table.order_by('to').print_csv()
+    print(len(occupancy_table))
+
+    print("Occupancy in both rush")
+
+    occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
+        lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('to_urban',
+                                                                                       'occupancy').print_csv()
+    print("\n")
+
+    occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
+        lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
+                                                                                       'occupancy').print_csv()
+    print("\n")
+
+    occupancy_table.where(lambda row: 1 == row['in_evening_rush']).where(
+        lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
+                                                                                       'occupancy').print_csv()
+    print("\n")
+
     occupancy_table.where(lambda row: 'FRIDAY' == row['weekday']).pivot('from_urban', 'occupancy').print_csv()
     print("\n")
     occupancy_table.where(lambda row: 'SUNDAY' == row['weekday']).pivot('to_urban', 'occupancy').print_csv()
+
+    print("\n")
+    occupancy_table.pivot('in_morning_rush', 'occupancy').print_csv()
+
     #
     # print("\nOCCUPANCY BY VEHICLE_TYPE => \n")
     # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "THA")

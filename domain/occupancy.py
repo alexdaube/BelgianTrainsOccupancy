@@ -36,6 +36,7 @@ class Occupancy:
     def __init__(self, occupancy_data, stations):  # , stations_data):
         self.date = self.string_to_date(occupancy_data['querytime'])
         self.weekday = self.date.weekday()
+        self.in_morning_rushhour, self.in_evening_rushhour = self.evaluate_time(self.date)
         # self.connections = self.validate_post_data_field(occupancy_data, 'connection')
         self.entering_station = self.assign_station(self.validate_post_data_field(occupancy_data, 'from'), stations)
         self.exiting_station = self.assign_station(self.validate_post_data_field(occupancy_data, 'to'), stations)
@@ -64,7 +65,24 @@ class Occupancy:
 
     def compose_unique_key(self):
         entering_station = "None" if self.entering_station is None else self.entering_station.number
-        return self.date.strftime("%Y%m%d%H%M%S") + entering_station + self.vehicle.number
+        existing_station = "None" if self.exiting_station is None else self.exiting_station.number
+        return self.date.strftime("%Y%m%d%H%M%S") + entering_station + existing_station + self.vehicle.number
+
+    def evaluate_time(self, date):
+        morning_rushhour_start = 7
+        morning_rushhour_end = 9
+        evening_rushhour_start = 16
+        evening_rushhour_end = 19
+
+        in_morning_rushhour = 0
+        in_evening_rushhour = 0
+
+        if morning_rushhour_start <= date.hour <= morning_rushhour_end:
+            in_morning_rushhour = 1
+        elif evening_rushhour_start <= date.hour <= evening_rushhour_end:
+            in_evening_rushhour = 1
+
+        return in_morning_rushhour, in_evening_rushhour
 
     def print_data(self):
         entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
@@ -91,5 +109,6 @@ class Occupancy:
 
         return [fake_date, hours, Weekday(self.weekday).name,
                 entering_station, self.entering_station.in_city, exiting_station, self.exiting_station.in_city,
+                self.in_morning_rushhour, self.in_evening_rushhour,
                 self.vehicle.number,
                 self.vehicle.type.name, occupancy_level]
