@@ -52,28 +52,42 @@ def main():
     print(len(occupancy_table))
 
     print("Occupancy in both rush")
+    #
+    # occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
+    #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('to_urban',
+    #                                                                                    'occupancy').print_csv()
+    # print("\n")
+    #
+    # occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
+    #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
+    #                                                                                    'occupancy').print_csv()
+    # print("\n")
+    #
+    # occupancy_table.where(lambda row: 1 == row['in_evening_rush']).where(
+    #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
+    #                                                                                    'occupancy').print_csv()
+    # print("\n")
+    #
+    # occupancy_table.where(lambda row: 'FRIDAY' == row['weekday']).pivot('from_urban', 'occupancy').print_csv()
+    # print("\n")
+    # occupancy_table.where(lambda row: 'SUNDAY' == row['weekday']).pivot('to_urban', 'occupancy').print_csv()
+    #
+    # print("\n")
 
-    occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
-        lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('to_urban',
-                                                                                       'occupancy').print_csv()
-    print("\n")
+    am_entries = occupancy_table.where(lambda row: 5 <= row['date'].hour < 12)
+    pm_entries = occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
 
-    occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
-        lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
-                                                                                       'occupancy').print_csv()
-    print("\n")
+    print("\nAM entries")
+    am_entries.pivot('to_urban').print_table()
+    am_entries.pivot('in_morning_rush', 'to_urban').print_table()
 
-    occupancy_table.where(lambda row: 1 == row['in_evening_rush']).where(
-        lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
-                                                                                       'occupancy').print_csv()
-    print("\n")
+    print("\nPM entries")
+    pm_entries.pivot('to_urban').print_table()
+    pm_entries.pivot('in_evening_rush', 'to_urban').print_table()
 
-    occupancy_table.where(lambda row: 'FRIDAY' == row['weekday']).pivot('from_urban', 'occupancy').print_csv()
-    print("\n")
-    occupancy_table.where(lambda row: 'SUNDAY' == row['weekday']).pivot('to_urban', 'occupancy').print_csv()
 
-    print("\n")
-    occupancy_table.pivot('in_morning_rush', 'occupancy').print_csv()
+
+    # occupancy_table.pivot('in_evening_rush', 'to_urban').print_table()
 
     #
     # print("\nOCCUPANCY BY VEHICLE_TYPE => \n")
