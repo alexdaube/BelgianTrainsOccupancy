@@ -74,16 +74,28 @@ def main():
     #
     # print("\n")
 
-    am_entries = occupancy_table.where(lambda row: 5 <= row['date'].hour < 12)
+    am_early_entries = occupancy_table.where(lambda row: 3 <= row['date'].hour or row['date'].hour < 6)
+    am_entries = occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
     pm_entries = occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
+    pm_late_entries = occupancy_table.where(lambda row: 22 < row['date'].hour or row['date'].hour < 3)
 
     print("\nAM entries")
-    am_entries.pivot('to_urban').print_table()
-    am_entries.pivot('in_morning_rush', 'to_urban').print_table()
+    data = am_early_entries.pivot('vehicle', 'occupancy').order_by('vehicle')
 
-    print("\nPM entries")
-    pm_entries.pivot('to_urban').print_table()
-    pm_entries.pivot('in_evening_rush', 'to_urban').print_table()
+    data.print_table(max_rows=2000, max_columns=15)
+
+    allo = data.columns['LOW']
+    print(allo)
+
+    # am_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=2000, max_columns=15)
+    # pm_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=2000, max_columns=15)
+    # pm_late_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=2000, max_columns=15)
+    # am_entries.pivot('to_urban').print_table()
+    # am_entries.pivot('in_morning_rush', 'to_urban').print_table()
+    #
+    # print("\nPM entries")
+    # pm_entries.pivot('to_urban').print_table()
+    # pm_entries.pivot('in_evening_rush', 'to_urban').print_table()
 
 
 
