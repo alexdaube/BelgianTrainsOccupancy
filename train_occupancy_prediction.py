@@ -48,7 +48,23 @@ def main():
 
     occupancy_table = agate.Table(occupancies_list, column_names, column_types)
 
-    occupancy_table.order_by('to').print_csv()
+    occupancy_table.where(lambda row: row['weekday'] == 'WEDNESDAY' and row['in_morning_rush'] == 1).pivot('to_urban', 'occupancy').print_table()
+    for x in occupancy_table.where(lambda row: row['weekday'] == 'WEDNESDAY' and row['in_morning_rush'] == 1).pivot('to_urban', 'occupancy'):
+        # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
+        count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
+        print("Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
+    # Type of trains
+    # occupancy_table.pivot('vehicle_type').print_table()
+    # for row in occupancy_table.pivot('vehicle_type'):
+    #     print(row['vehicle_type'], " : ", round((row['Count'] / 2002) * 100, 2), "%")
+
+
+
+    # occupancy_table.print_table(max_rows=3000, max_columns=15)
+    # occupancy_table.where(lambda row: row['vehicle_type'] == 'L').pivot('vehicle_type', 'occupancy').print_table()
+
+    # occupancy_table.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush', 'occupancy').print_table(max_rows=2000, max_columns=15)
+
     print(len(occupancy_table))
 
     print("Occupancy in both rush")
@@ -74,22 +90,40 @@ def main():
     #
     # print("\n")
 
-    am_early_entries = occupancy_table.where(lambda row: 3 <= row['date'].hour or row['date'].hour < 6)
+    early_entries = occupancy_table.where(lambda row: 3 <= row['date'].hour < 6 )
     am_entries = occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
     pm_entries = occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
-    pm_late_entries = occupancy_table.where(lambda row: 22 < row['date'].hour or row['date'].hour < 3)
+    late_entries = occupancy_table.where(lambda row: row['date'].hour < 3 or row['date'].hour > 22)
+
 
     print("\nAM entries")
-    data = am_early_entries.pivot('vehicle', 'occupancy').order_by('vehicle')
+    data = early_entries.pivot('vehicle', 'occupancy').order_by('vehicle')
 
     data.print_table(max_rows=2000, max_columns=15)
 
     allo = data.columns['LOW']
     print(allo)
 
-    # am_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=2000, max_columns=15)
-    # pm_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=2000, max_columns=15)
-    # pm_late_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=2000, max_columns=15)
+    by_weekday = late_entries.pivot('weekday', 'occupancy')
+
+    by_weekday.print_table()
+    for x in by_weekday:
+        # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
+        count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
+        print(x["weekday"], ":" "Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
+
+    # am_entries.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush').print_table(
+    #     max_rows=2000, max_columns=15)
+    #
+    # rest_entries_night = occupancy_table.where(lambda row: 22 < row['date'].hour).where(
+    #     lambda row: 1 == row['to_urban']).where(lambda row: 0 == row['from_urban'])
+    # rest_entries_morning = occupancy_table.where(lambda row: row['date'].hour < 1).where(
+    #     lambda row: 1 == row['to_urban']).where(lambda row: 0 == row['from_urban'])
+    #
+    # rest_entries_night.pivot('weekday', 'occupancy').print_table()
+    # rest_entries_morning.pivot('weekday', 'occupancy').print_table()
+    #
+    # print("\nAM entries")
     # am_entries.pivot('to_urban').print_table()
     # am_entries.pivot('in_morning_rush', 'to_urban').print_table()
     #
