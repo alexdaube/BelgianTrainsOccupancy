@@ -29,7 +29,7 @@ class Entry:
 
         self.weekday = self.date.weekday()
 
-        self.in_morning_rushhour, self.in_evening_rushhour = self.evaluate_time()
+        self.day_zone = self.evaluate_day_period()
 
         # self.exiting_station = str(occupancy_data['from'])
         # self.entering_station = str(occupancy_data['to'])
@@ -38,6 +38,24 @@ class Entry:
         self.exiting_station = self.assign_station((occupancy_data['to']), stations)
 
         self.vehicle = Vehicle(occupancy_data['vehicle'])
+
+    def evaluate_day_period(self):
+        # DAY PERIOD :
+        # 0 -> early morning,
+        # 1 -> AM,
+        # 2 ->PM,
+        # 3 -> late_night
+        day_period = 3
+        if 3 <= self.datetime_object.hour < 6:
+            day_period = 0
+        elif 6 <= self.datetime_object.hour < 12:
+            day_period = 1
+        elif 12 <= self.datetime_object.hour <= 22:
+            day_period = 2
+        elif 3 > self.datetime_object.hour or self.datetime_object.hour > 22:
+            day_period = 3
+
+        return day_period
 
     def assign_station(self, station_uri, stations):
         if station_uri is not None:
@@ -50,8 +68,6 @@ class Entry:
         morning_rushhour_end = 9
         evening_rushhour_start = 16
         evening_rushhour_end = 19
-
-        # DAY PERIOD : 0 -> early morning, 1 -> morning rush, 2 ->between, 3 -> evening_rush, 4 -> late_night
 
         in_morning_rush = 0
         in_evening_rush = 0
@@ -73,8 +89,9 @@ class Entry:
         return None
 
     def to_list(self):
-        return [self.datetime_object, Weekday(self.weekday).name, self.entering_station.number, self.exiting_station.number,
-                self.entering_station.in_city,self.exiting_station.in_city,
-                self.in_morning_rushhour, self.in_evening_rushhour,
+        return [self.datetime_object, Weekday(self.weekday).name, self.entering_station.number,
+                self.exiting_station.number,
+                self.entering_station.in_city, self.exiting_station.in_city,
+                self.day_zone,
                 self.vehicle.number,
                 self.vehicle.type.name]

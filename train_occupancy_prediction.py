@@ -35,12 +35,11 @@ def main():
 
     test_entries = [Entry(occupancy_data, stations) for occupancy_data in test_data_raw]
 
-    test_data_column_names = ['date', 'weekday', "from", "to",'from_urban','to_urban', "in_morning_rush",
-                              "in_evening_rush", "vehicle", "vehicle_type",
+    test_data_column_names = ['date', 'weekday', "from", "to", 'from_urban', 'to_urban', 'day_period', "vehicle",
+                              "vehicle_type",
                               ]
 
     test_data_column_types = [agate.DateTime(), agate.Text(), agate.Text(), agate.Text(),
-                              agate.Text(),
                               agate.Text(),
                               agate.Text(),
                               agate.Text(),
@@ -53,7 +52,7 @@ def main():
         test_list.append(occupancy.to_list())
 
     test_data_occupancy_table = agate.Table(test_list, test_data_column_names, test_data_column_types)
-    test_data_occupancy_table.print_table(max_rows=100, max_columns=15)
+    test_data_occupancy_table.print_table(max_rows=1000, max_columns=15)
 
     test_data_early_entries = test_data_occupancy_table.where(lambda row: 3 <= row['date'].hour < 6)
     test_data_am_entries = test_data_occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
