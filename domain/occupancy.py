@@ -51,7 +51,7 @@ class Occupancy:
     def assign_station(self, station_uri, stations):
         if station_uri is not None:
             station_id = strip_uri_last_element(station_uri)
-            return stations[station_id] if len(station_id) > 8 else None
+            return stations[station_id] if len(station_id) > 6 else None
         return station_uri
 
     def ceil_to_quarter(self, date):

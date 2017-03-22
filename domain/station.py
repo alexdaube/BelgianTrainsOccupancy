@@ -5,7 +5,7 @@ class Station:
     API_BASE_STATION_URL = "http://irail.be/stations/NMBS/"
 
     def __init__(self, stations_data, cities):
-        self.number = strip_uri_last_element(stations_data[0])
+        self.number = int(strip_uri_last_element(stations_data[0]))
         self.name = stations_data[1]
         self.longitude = float(stations_data[7])
         self.latitude = float(stations_data[8])

@@ -10,7 +10,6 @@ def extractRushHourEntries(entries):
 
     return entries_in_rushhour
 
-
 def calculateRushHourConfidence(occupancies):
     entries_in_rushhour = extractRushHourEntries(occupancies)
 
