@@ -95,13 +95,13 @@ def main():
     pm_entries = occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
     late_entries = occupancy_table.where(lambda row: row['date'].hour < 3 or row['date'].hour > 22)
 
-    by_weekday = early_entries.pivot('weekday', 'occupancy')
+    by_weekday = late_entries.pivot('weekday', 'occupancy')
 
-    by_weekday.print_table() 
+    by_weekday.print_table()
     for x in by_weekday:
         # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
         count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-        print("Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
+        print(x["weekday"], ":" "Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
 
     # am_entries.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush').print_table(
     #     max_rows=2000, max_columns=15)
