@@ -1,6 +1,6 @@
 from algos.pre_processing import filter_duplicates, filter_erroneous
 from algos.statistics import *
-from algos.data_transformation import calculateRushHourConfidence
+from algos.data_transformation import *
 from domain.occupancy import Occupancy
 from domain.station import Station
 from domain.city import City
@@ -35,14 +35,17 @@ def main():
 
     test_entries = [Entry(occupancy_data, stations) for occupancy_data in test_data_raw]
 
-    test_data_column_names = ['date', 'weekday', "from", "to", 'from_urban', 'to_urban', 'day_period', "vehicle",
+    test_data_column_names = ['date', 'weekday', "from", "to", 'from_urban', 'to_urban', 'day_period',
+                              'in_morning_rush', 'in_evening_rush', "vehicle",
                               "vehicle_type",
                               ]
 
     test_data_column_types = [agate.DateTime(), agate.Text(), agate.Text(), agate.Text(),
-                              agate.Text(),
-                              agate.Text(),
-                              agate.Text(),
+                              agate.Number(),
+                              agate.Number(),
+                              agate.Number(),
+                              agate.Number(),
+                              agate.Number(),
                               agate.Text(),
                               agate.Text()]
 
@@ -52,14 +55,110 @@ def main():
         test_list.append(occupancy.to_list())
 
     test_data_occupancy_table = agate.Table(test_list, test_data_column_names, test_data_column_types)
-    test_data_occupancy_table.print_table(max_rows=1000, max_columns=15)
+    # test_data_occupancy_table.print_table(max_rows=1000, max_columns=15)
 
-    test_data_early_entries = test_data_occupancy_table.where(lambda row: 3 <= row['date'].hour < 6)
-    test_data_am_entries = test_data_occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
-    test_data_pm_entries = test_data_occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
-    test_data_late_entries = test_data_occupancy_table.where(lambda row: row['date'].hour < 3 or row['date'].hour > 22)
+    final_occupancies = []
 
+    # OCCUPANCY RATING:
+    # 0 --> LOW
+    # 1--> MEDIUM
+    # 2--> HIGH
 
+    LOW_OCCUPANCY = 0
+    MEDIUM_OCCUPANCY = 1
+    HIGH_OCCUPANCY = 2
+
+    columns = ['id', 'occupancy']
+    columns_types = [agate.Number(), agate.Number()]
+
+    index = 0
+
+    for test_entry in test_data_occupancy_table:
+
+        if isWeekend(test_entry):
+            if isEarlyMorning(test_entry):
+                temp_occupency = LOW_OCCUPANCY
+            elif isMorningRush(test_entry):
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    temp_occupency = HIGH_OCCUPANCY
+                elif isFromUrban(test_entry) or isGoingUrban(test_entry):
+                    temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+
+            elif isAfternoon(test_entry):
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+
+            elif isEveningRush(test_entry):
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    temp_occupency = HIGH_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+            else:
+                if isSunday(test_entry):
+                    if isGoingUrban(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    else:
+                        temp_occupency = LOW_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+
+        else:
+            if isEarlyMorning(test_entry):
+                if isMonday(test_entry):
+                    if isGoingUrban(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    else:
+                        temp_occupency = LOW_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+
+            elif isBeforeNoon(test_entry):
+                if isMorningRush(test_entry):
+                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    elif isFromUrban(test_entry) or isGoingUrban(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = HIGH_OCCUPANCY
+
+            elif isAfternoon(test_entry):
+                if isEveningRush(test_entry):
+                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    elif isFromUrban(test_entry) or isGoingUrban(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = LOW_OCCUPANCY
+
+            elif isLateEvening(test_entry):
+                if isFromUrban(test_entry) and not isGoingUrban(test_entry):
+                    temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
+
+        final_occupancies.append([index, temp_occupency])
+        index += 1
+
+    results = agate.Table(final_occupancies, columns, columns_types)
+    results.print_table(max_rows=3000, max_columns=15)
+
+    results.to_csv('test_1.csv')
 
     # occupancies = [Occupancy(occupancy_data, stations) for occupancy_data in occupancies_raw_data]
     #

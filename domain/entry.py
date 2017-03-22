@@ -28,7 +28,7 @@ class Entry:
         self.datetime_object = datetime.strptime(string_date, '%d %m %Y %I:%M:%S %p')
 
         self.weekday = self.date.weekday()
-
+        self.in_morning_rush, self.in_evening_rush = self.evaluate_time()
         self.day_zone = self.evaluate_day_period()
 
         # self.exiting_station = str(occupancy_data['from'])
@@ -93,5 +93,6 @@ class Entry:
                 self.exiting_station.number,
                 self.entering_station.in_city, self.exiting_station.in_city,
                 self.day_zone,
+                self.in_morning_rush, self.in_evening_rush,
                 self.vehicle.number,
                 self.vehicle.type.name]
