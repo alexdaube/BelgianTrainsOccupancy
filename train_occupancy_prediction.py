@@ -74,20 +74,44 @@ def main():
     index = 0
 
     for test_entry in test_data_occupancy_table:
-
-        if isWeekend(test_entry):
-            if isEarlyMorning(test_entry):
+        if isEarlyMorning(test_entry):
+            if (isSunday(test_entry) or isMonday(test_entry)) and isGoingUrban(test_entry):
+                temp_occupency = HIGH_OCCUPANCY
+            else:
                 temp_occupency = LOW_OCCUPANCY
-            elif isMorningRush(test_entry):
-                if isFromUrban(test_entry) and isGoingUrban(test_entry):
-                    temp_occupency = HIGH_OCCUPANCY
-                elif isFromUrban(test_entry) or isGoingUrban(test_entry):
+
+        if isLateEvening(test_entry):
+            if isSunday(test_entry) and isGoingUrban(test_entry):
+                temp_occupency = HIGH_OCCUPANCY
+            if isMonday(test_entry) and isGoingUrban(test_entry) and isFromUrban(test_entry):
+                temp_occupency = MEDIUM_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
+
+        elif isBeforeNoon(test_entry):
+            if isWeekend(test_entry):
+                if isSunday(test_entry) and isFromUrban(test_entry) and isGoingUrban(test_entry):
                     temp_occupency = MEDIUM_OCCUPANCY
                 else:
                     temp_occupency = LOW_OCCUPANCY
 
-            elif isAfternoon(test_entry):
+            elif isMorningRush(test_entry):
                 if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    if isWednesday(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
+
+                elif isFromUrban(test_entry) and not isGoingUrban(test_entry):
+                    temp_occupency = LOW_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
+
+        elif isAfternoon(test_entry):
+            if isWeekend(test_entry):
+                if isSunday(test_entry) and isFromUrban(test_entry) and not isGoingUrban(test_entry):
                     temp_occupency = MEDIUM_OCCUPANCY
                 else:
                     temp_occupency = LOW_OCCUPANCY
@@ -95,62 +119,44 @@ def main():
             elif isEveningRush(test_entry):
                 if isFromUrban(test_entry) and isGoingUrban(test_entry):
                     temp_occupency = HIGH_OCCUPANCY
+
+                elif isFromUrban(test_entry) and not isGoingUrban(test_entry):
+                    if isFriday(test_entry) or isMonday(test_entry) or isTuesday(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    elif isWednesday(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
+
+                elif isGoingUrban(test_entry) and not isFromUrban(test_entry):
+                    if isThursday(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    elif isTuesday(test_entry) and isFriday(test_entry):
+                        temp_occupency = LOW_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
                 else:
                     temp_occupency = LOW_OCCUPANCY
+
             else:
-                if isSunday(test_entry):
-                    if isGoingUrban(test_entry):
-                        temp_occupency = HIGH_OCCUPANCY
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    if isMonday(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
                     else:
                         temp_occupency = LOW_OCCUPANCY
                 else:
                     temp_occupency = LOW_OCCUPANCY
 
-        else:
-            if isEarlyMorning(test_entry):
-                if isMonday(test_entry):
-                    if isGoingUrban(test_entry):
-                        temp_occupency = HIGH_OCCUPANCY
-                    else:
-                        temp_occupency = LOW_OCCUPANCY
-                else:
-                    temp_occupency = LOW_OCCUPANCY
-
-            elif isBeforeNoon(test_entry):
-                if isMorningRush(test_entry):
-                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
-                        temp_occupency = HIGH_OCCUPANCY
-                    elif isFromUrban(test_entry) or isGoingUrban(test_entry):
-                        temp_occupency = MEDIUM_OCCUPANCY
-                    else:
-                        temp_occupency = MEDIUM_OCCUPANCY
-                else:
-                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
-                        temp_occupency = MEDIUM_OCCUPANCY
-                    else:
-                        temp_occupency = HIGH_OCCUPANCY
-
-            elif isAfternoon(test_entry):
-                if isEveningRush(test_entry):
-                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
-                        temp_occupency = HIGH_OCCUPANCY
-                    elif isFromUrban(test_entry) or isGoingUrban(test_entry):
-                        temp_occupency = MEDIUM_OCCUPANCY
-                    else:
-                        temp_occupency = MEDIUM_OCCUPANCY
-                else:
-                    if isFromUrban(test_entry) and isGoingUrban(test_entry):
-                        temp_occupency = MEDIUM_OCCUPANCY
-                    else:
-                        temp_occupency = LOW_OCCUPANCY
-
-            elif isLateEvening(test_entry):
-                if isFromUrban(test_entry) and not isGoingUrban(test_entry):
-                    temp_occupency = MEDIUM_OCCUPANCY
-                else:
-                    temp_occupency = LOW_OCCUPANCY
+        elif isLateEvening(test_entry):
+            if isWednesday(test_entry) or isSunday(test_entry):
+                temp_occupency = HIGH_OCCUPANCY
+            elif isMonday(test_entry):
+                temp_occupency = MEDIUM_OCCUPANCY
             else:
                 temp_occupency = LOW_OCCUPANCY
+        else:
+            temp_occupency = LOW_OCCUPANCY
+
 
         final_occupancies.append([index, temp_occupency])
         index += 1
@@ -159,195 +165,6 @@ def main():
     results.print_table(max_rows=3000, max_columns=15)
 
     results.to_csv('test_1.csv')
-
-    # occupancies = [Occupancy(occupancy_data, stations) for occupancy_data in occupancies_raw_data]
-    #
-    # occupancies = filter_duplicates(filter_erroneous(occupancies))
-    #
-    # column_names = ['date', 'hour', 'weekday', "from", "from_urban", "to", "to_urban", "in_morning_rush",
-    #                 "in_evening_rush", "vehicle", "vehicle_type",
-    #                 "occupancy"]
-    #
-    # column_types = [agate.DateTime(), agate.Number(), agate.Text(), agate.Number(), agate.Number(), agate.Number(),
-    #                 agate.Number(), agate.Number(), agate.Number(), agate.Text(),
-    #                 agate.Text(),
-    #                 agate.Text()]
-    #
-    # occupancies_list = []
-    # for occupancy in occupancies:
-    #     occupancies_list.append(occupancy.to_list())
-    #
-    # occupancy_table = agate.Table(occupancies_list, column_names, column_types)
-    #
-    # occupancy_table.where(lambda row: row['weekday'] == 'WEDNESDAY' and row['in_morning_rush'] == 1).pivot('to_urban',
-    #                                                                                                        'occupancy').print_table()
-    # for x in occupancy_table.where(lambda row: row['weekday'] == 'WEDNESDAY' and row['in_morning_rush'] == 1).pivot(
-    #         'to_urban', 'occupancy'):
-    #     # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
-    #     count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-    #     print("Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2), '%', "MEDIUM:",
-    #           round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2), '%')
-    # # Type of trains
-    # # occupancy_table.pivot('vehicle_type').print_table()
-    # # for row in occupancy_table.pivot('vehicle_type'):
-    # #     print(row['vehicle_type'], " : ", round((row['Count'] / 2002) * 100, 2), "%")
-    #
-    #
-    #
-    # # occupancy_table.print_table(max_rows=3000, max_columns=15)
-    # # occupancy_table.where(lambda row: row['vehicle_type'] == 'L').pivot('vehicle_type', 'occupancy').print_table()
-    #
-    # # occupancy_table.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush', 'occupancy').print_table(max_rows=2000, max_columns=15)
-    #
-    # print(len(occupancy_table))
-    #
-    # print("Occupancy in both rush")
-    # #
-    # # occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
-    # #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('to_urban',
-    # #                                                                                    'occupancy').print_csv()
-    # # print("\n")
-    # #
-    # # occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
-    # #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
-    # #                                                                                    'occupancy').print_csv()
-    # # print("\n")
-    # #
-    # # occupancy_table.where(lambda row: 1 == row['in_evening_rush']).where(
-    # #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
-    # #                                                                                    'occupancy').print_csv()
-    # # print("\n")
-    # #
-    # # occupancy_table.where(lambda row: 'FRIDAY' == row['weekday']).pivot('from_urban', 'occupancy').print_csv()
-    # # print("\n")
-    # # occupancy_table.where(lambda row: 'SUNDAY' == row['weekday']).pivot('to_urban', 'occupancy').print_csv()
-    # #
-    # # print("\n")
-    #
-    # early_entries = occupancy_table.where(lambda row: 3 <= row['date'].hour < 6)
-    # am_entries = occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
-    # pm_entries = occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
-    # late_entries = occupancy_table.where(lambda row: row['date'].hour < 3 or row['date'].hour > 22)
-    #
-    # print("\nAM entries")
-    # # by_vehicle = early_entries.pivot(['vehicle', 'occupancy']).print_table(max_rows=2000, max_columns=15)
-    #
-    # data = am_entries.pivot(['occupancy', 'vehicle']).order_by('vehicle')
-    # good = data.where(lambda row: row['Count'] > 6)
-    #
-    # good.print_table(max_rows=100, max_columns=15)
-
-
-
-    # # am_entries.pivot(['vehicle', 'occupancy'], computation=agate.Percent('Count')).order_by('vehicle').print_table(max_rows = 100, max_columns = 15)
-    #
-    # am_entries.pivot(['vehicle', 'occupancy']).order_by('vehicle').print_table(max_rows=100, max_columns=15)
-    # am_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=100, max_columns=15)
-    #
-    # pm_entries.pivot(['vehicle', 'occupancy']).order_by('vehicle').print_table(max_rows=100, max_columns=15)
-
-
-    #
-    # for x in by_vehicle:
-    #     # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
-    #     count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-    #     print(x["vehicle"], ":" "Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
-
-    #
-    # by_vehicle.print_table(max_rows=2000, max_columns=15)
-    # allo = data.columns['LOW']
-    #
-    #
-    # by_weekday = late_entries.pivot('weekday', 'occupancy')
-    #
-    # by_weekday.print_table()
-    # for x in by_weekday:
-    #     # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
-    #     count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-    #     print(x["weekday"], ":" "Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
-
-    # am_entries.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush').print_table(
-    #     max_rows=2000, max_columns=15)
-    #
-    # rest_entries_night = occupancy_table.where(lambda row: 22 < row['date'].hour).where(
-    #     lambda row: 1 == row['to_urban']).where(lambda row: 0 == row['from_urban'])
-    # rest_entries_morning = occupancy_table.where(lambda row: row['date'].hour < 1).where(
-    #     lambda row: 1 == row['to_urban']).where(lambda row: 0 == row['from_urban'])
-    #
-    # rest_entries_night.pivot('weekday', 'occupancy').print_table()
-    # rest_entries_morning.pivot('weekday', 'occupancy').print_table()
-    #
-    # print("\nAM entries")
-    # am_entries.pivot('to_urban').print_table()
-    # am_entries.pivot('in_morning_rush', 'to_urban').print_table()
-    #
-    # print("\nPM entries")
-    # pm_entries.pivot('to_urban').print_table()
-    # pm_entries.pivot('in_evening_rush', 'to_urban').print_table()
-
-
-
-    # occupancy_table.pivot('in_evening_rush', 'to_urban').print_table()
-
-    #
-    # print("\nOCCUPANCY BY VEHICLE_TYPE => \n")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "THA")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "IC")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "L")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "S")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "P")
-    #
-    # print("\nOCCUPANCY BY WEEKDAY => \n")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "MONDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "TUESDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "WEDNESDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "THURSDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "FRIDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "SATURDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "SUNDAY")
-    #
-    # g_by = occupancy_table.group_by("to")
-    # for t in g_by:
-    #     print("\n")
-    #     t.print_csv()
-    #
-    # # entries_per_day = occupancy_table.pivot(['weekday'])
-    # #git s
-    # monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
-    # tuesday_results = occupancy_table.where(lambda row: 'TUESDAY' == row['weekday'])
-    # wednesday_results = occupancy_table.where(lambda row: 'WEDNESDAY' == row['weekday'])
-    # thursday_results = occupancy_table.where(lambda row: 'THURSDAY' == row['weekday'])
-    # friday_results = occupancy_table.where(lambda row: 'FRIDAY' == row['weekday'])
-    # saturday_results = occupancy_table.where(lambda row: 'SATURDAY' == row['weekday'])
-    # sunday_results = occupancy_table.where(lambda row: 'SUNDAY' == row['weekday'])
-    # #
-    # # # monday_results.order_by('date').print_table(max_rows=2000, max_columns=15)
-    # #
-    # # monday_results.group_by('occupancy').order_by('date').merge().print_table(max_rows=2000, max_columns=15)
-    #
-    # # Possible to inspect datetime object with lambda...
-    # new_table = monday_results.where(lambda row: 6 <= row['date'].hour <= 8)
-    #
-    # print("\n############MONDAY###############")
-    # analyzeDay(monday_results)
-    # print("\n############TUESDAY###############")
-    # analyzeDay(tuesday_results)
-    # print("\n############WEDNESDAY###############")
-    # analyzeDay(wednesday_results)
-    # print("\n############THURSDAY###############")
-    # analyzeDay(thursday_results)
-    # print("\n############FRIDAY###############")
-    # analyzeDay(friday_results)
-    # print("\n############SATURDAY###############")
-    # analyzeDay(saturday_results)
-    # print("\n############SUNDAY###############")
-    # analyzeDay(sunday_results)
-    # high_occ = monday_results.where(lambda row: 'HIGH' == row['occupancy'])
-    #
-    # low = monday_results.where(lambda row: 'LOW' == row['occupancy'])
-    # binned_hours = high_occ.bins('hour', 23, 0, 23).print_bars('hour', width=80)
-    # binned_hours2 = low.bins('hour', 23, 0, 23).print_bars('hour', width=80)
-
 
 def analyzeDay(daily_results):
     # Print graph of entry / hour

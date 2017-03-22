@@ -10,6 +10,23 @@ def isMonday(row):
 def isSunday(row):
     return row['weekday'] == 'SUNDAY'
 
+def isSaturday(row):
+    return row['weekday'] == 'SATURDAY'
+
+def isWednesday(row):
+    return row['weekday'] == 'WEDNESDAY'
+
+def isTuesday(row):
+    return row['weekday'] == 'TUESDAY'
+
+
+def isThursday(row):
+    return row['weekday'] == 'THURSDAY'
+
+
+def isFriday(row):
+    return row['weekday'] == 'FRIDAY'
+
 def isMorningRush(row):
     return row['in_morning_rush'] == 1
 
