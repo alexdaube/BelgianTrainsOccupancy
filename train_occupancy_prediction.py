@@ -6,7 +6,11 @@ from domain.station import Station
 from domain.city import City
 from domain.entry import Entry
 from utils.file_utils import parse_csv_file_to_list, parse_json_file_to_list
-import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn import tree
+import numpy as np
 import agate
 
 OCCUPANCY_DATA_FILE = 'occupancy-until-20161029.newlinedelimitedjsonobjects'
@@ -37,13 +41,11 @@ def main():
     occupancies = filter_duplicates(filter_erroneous(occupancies))
 
     column_names = ['date', 'hour', 'weekday', "from", "from_urban", "to", "to_urban", "in_morning_rush",
-                    "in_evening_rush", "vehicle", "vehicle_type",
+                    "in_evening_rush", "vehicle_type",
                     "occupancy"]
 
-    column_types = [agate.DateTime(), agate.Number(), agate.Text(), agate.Number(), agate.Number(), agate.Number(),
-                    agate.Number(), agate.Number(), agate.Number(), agate.Text(),
-                    agate.Text(),
-                    agate.Text()]
+    column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(),
+                    agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number()]
 
     occupancies_list = []
     for occupancy in occupancies:
@@ -53,9 +55,19 @@ def main():
 
     level_column = ['occupancy']
     occupancy_level = occupancy_table.select(level_column)
-    occupancy_level.print_table(max_rows=3000, max_columns=15)
+    # occupancy_level.print_table(max_rows=3000, max_columns=15)
 
     occupancy_table.print_table(max_rows=3000, max_columns=15)
+
+    all_rows = np.array([[value for value in row.values()] for row in occupancy_table.rows])
+    x = all_rows[:, 0:10]
+    y = all_rows[:, 10]
+
+    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.0, random_state=100)
+
+    clf_gini = DecisionTreeClassifier(criterion="gini")
+    clf_gini.fit(x_train, y_train)
+    hell = ""
 
 
 def predictData(self):

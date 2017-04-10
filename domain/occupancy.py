@@ -98,7 +98,7 @@ class Occupancy:
         entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
         exiting_station = self.exiting_station if self.exiting_station is None else self.exiting_station.number
         occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
-            self.occupancy_level).name
+            self.occupancy_level).value
 
         fake_date = datetime(1999, 1, 1, self.date.hour, self.date.minute, 0, 0)
 
@@ -107,8 +107,9 @@ class Occupancy:
         else:
             hours = str(self.date.hour)
 
-        return [fake_date, hours, Weekday(self.weekday).name,
+        seconds_since_midnight = (fake_date - fake_date.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+
+        return [seconds_since_midnight, hours, Weekday(self.weekday).value,
                 entering_station, self.entering_station.in_city, exiting_station, self.exiting_station.in_city,
                 self.in_morning_rushhour, self.in_evening_rushhour,
-                self.vehicle.number,
-                self.vehicle.type.name, occupancy_level]
+                self.vehicle.type.value, occupancy_level]
