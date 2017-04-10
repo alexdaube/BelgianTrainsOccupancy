@@ -6,6 +6,7 @@ from domain.station import Station
 from domain.city import City
 from domain.entry import Entry
 from utils.file_utils import parse_csv_file_to_list, parse_json_file_to_list
+import sklearn
 import agate
 
 OCCUPANCY_DATA_FILE = 'occupancy-until-20161029.newlinedelimitedjsonobjects'
@@ -15,6 +16,49 @@ OCCUPANCY_TEST_FILE = 'trains_test.csv'
 
 def main():
     occupancies_raw_data = parse_json_file_to_list(OCCUPANCY_DATA_FILE)
+    stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
+    # test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
+    cities = [City("Brussels", 50.786350, 50.918930, 4.276428, 4.4991348),
+              City("Antwerp", 51.173693, 51.317015, 4.254456, 4.507141),
+              City("Ghent", 51.002832, 51.103832, 3.69072, 3.766251),
+              City("Charleroi", 50.403524, 50.418660, 4.434013, 4.457359),
+              City("Liège", 50.581055, 50.647440, 5.557022, 5.596504),
+              City("Bruges", 51.195129, 51.223843, 3.212128, 3.24337),
+              City("Namur", 50.461298, 50.470258, 4.848919, 4.878101),
+              City("Leuven", 50.867048, 50.890551, 4.681377, 4.716396),
+              City("Mons", 50.445013, 50.461189, 3.9382, 3.961773),
+              City("Aalst", 50.927354, 50.949854, 4.015331, 4.054985),
+              City("Lille", 50.615894, 50.651607, 3.028107, 3.08527)]
+
+    stations = {station.number: station for station in
+                [Station(station_data, cities) for station_data in stations_raw_data]}
+    occupancies = [Occupancy(occupancy_data, stations) for occupancy_data in occupancies_raw_data]
+
+    occupancies = filter_duplicates(filter_erroneous(occupancies))
+
+    column_names = ['date', 'hour', 'weekday', "from", "from_urban", "to", "to_urban", "in_morning_rush",
+                    "in_evening_rush", "vehicle", "vehicle_type",
+                    "occupancy"]
+
+    column_types = [agate.DateTime(), agate.Number(), agate.Text(), agate.Number(), agate.Number(), agate.Number(),
+                    agate.Number(), agate.Number(), agate.Number(), agate.Text(),
+                    agate.Text(),
+                    agate.Text()]
+
+    occupancies_list = []
+    for occupancy in occupancies:
+        occupancies_list.append(occupancy.to_list())
+
+    occupancy_table = agate.Table(occupancies_list, column_names, column_types)
+
+    level_column = ['occupancy']
+    occupancy_level = occupancy_table.select(level_column)
+    occupancy_level.print_table(max_rows=3000, max_columns=15)
+
+    occupancy_table.print_table(max_rows=3000, max_columns=15)
+
+
+def predictData(self):
     stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
     test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
 
@@ -157,7 +201,6 @@ def main():
         else:
             temp_occupency = LOW_OCCUPANCY
 
-
         final_occupancies.append([index, temp_occupency])
         index += 1
 
@@ -165,6 +208,7 @@ def main():
     results.print_table(max_rows=3000, max_columns=15)
 
     results.to_csv('test_1.csv')
+
 
 def analyzeDay(daily_results):
     # Print graph of entry / hour
