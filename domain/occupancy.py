@@ -94,7 +94,7 @@ class Occupancy:
         # 4 -> late night
 
         day_period = 0
-        if 0 <= self.date.hour < 6:
+        if 2 <= self.date.hour < 6:
             day_period = 0
         elif 6 <= self.date.hour < 10:
             day_period = 1
@@ -102,7 +102,7 @@ class Occupancy:
             day_period = 2
         elif 15 <= self.date.hour < 19:
             day_period = 3
-        elif 19 <= self.date.hour < 24:
+        elif 19 <= self.date.hour <= 24 or 0 <= self.date.hour < 2:
             day_period = 4
 
         return day_period

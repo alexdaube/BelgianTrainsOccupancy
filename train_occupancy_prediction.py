@@ -48,8 +48,9 @@ def main():
     for day in days:
         daily_decision_trees.append(trainTreeForSpecificDay(day))
 
-    hell = '';
-    clf_gini, clf_entropy = trainTreeForSpecificDay('TUESDAY')
+    predictTestData(daily_decision_trees)
+
+    # clf_gini, clf_entropy = trainTreeForSpecificDay('TUESDAY')
     # predictTestData(clf_gini, clf_entropy)
 
     # y_pred = clf_gini.predict(X_test)
@@ -57,7 +58,6 @@ def main():
     # print("Accuracy GINI is ", accuracy_score(y_test, y_pred) * 100)
 
     # print("Accuracy ENTROPY is ", accuracy_score(y_test, y_pred_ent) * 100)
-    hell = ""
 
 
 def trainTree():
@@ -141,17 +141,17 @@ def trainTreeForSpecificDay(day):
 
     occupancy_day = occupancy_table.where(lambda row: day == row['weekday'])
 
-    occupancy_day.print_table(max_rows=3000, max_columns=15)
+    # occupancy_day.print_table(max_rows=3000, max_columns=15)
 
     occupancy_daily = occupancy_day.select(target_column_names)
 
-    occupancy_daily.print_table(max_rows=3000, max_columns=15)
+    # occupancy_daily.print_table(max_rows=3000, max_columns=15)
 
     all_rows = np.array([[value for value in row.values()] for row in occupancy_daily.rows])
     x = all_rows[:, 0:3]
     y = all_rows[:, 4]
 
-    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=100)
+    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0, random_state=100)
 
     clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=6, min_samples_leaf=3)
     clf_gini.fit(x_train, y_train)
@@ -168,13 +168,21 @@ def trainTreeForSpecificDay(day):
         f = tree.export_graphviz(clf_entropy, feature_names=feature_names, class_names=class_names, filled=True,
                                  out_file=f)
 
-    y_pred_ent = clf_entropy.predict(X_test)
-    print("Accuracy is ", accuracy_score(y_test, y_pred_ent) * 100)
+    # y_pred_ent = clf_entropy.predict(X_test)
+    # print("Accuracy is ", accuracy_score(y_test, y_pred_ent) * 100)
 
     return clf_gini, clf_entropy
 
 
-def predictTestData(clf_gini, clf_entropy):
+def predictTestData(daily_trained_classifiers):
+    clf_gini_monday, clf_entropy_monday = daily_trained_classifiers[0]
+    clf_gini_tuesday, clf_entropy_tuesday = daily_trained_classifiers[1]
+    clf_gini_wednesday, clf_entropy_wednesday = daily_trained_classifiers[2]
+    clf_gini_thursday, clf_entropy_thursday = daily_trained_classifiers[3]
+    clf_gini_friday, clf_entropy_friday = daily_trained_classifiers[4]
+    clf_gini_saturday, clf_entropy_saturday = daily_trained_classifiers[5]
+    clf_gini_sunday, clf_entropy_sunday = daily_trained_classifiers[6]
+
     stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
     test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
 
@@ -182,16 +190,17 @@ def predictTestData(clf_gini, clf_entropy):
                 [StationEntry(station_data, cities) for station_data in stations_raw_data]}
 
     test_entries = [Entry(occupancy_data, stations) for occupancy_data in test_data_raw]
-
-    test_data_column_names = ['is_weekday', 'day_period', 'from_urban', 'to_urban',
-                              'in_morning_rush', 'in_evening_rush',
+    #
+    # test_data_column_names = ['is_weekday', 'day_period', 'from_urban', 'to_urban',
+    #                           'in_morning_rush', 'in_evening_rush',
+    #                           "vehicle_type"
+    #                           ]
+    test_data_column_names = ['day_period', 'weekday', 'from_urban', 'to_urban',
                               "vehicle_type"
                               ]
 
     test_data_column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(),
                               agate.Number(),
-                              agate.Number(),
-                              agate.Number()
                               ]
 
     test_list = []
@@ -203,17 +212,43 @@ def predictTestData(clf_gini, clf_entropy):
 
     test_data_occupancy_table.print_table(max_rows=3000, max_columns=15)
 
-    all_rows = np.array([[value for value in row.values()] for row in test_data_occupancy_table.rows])
+    target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
 
-    x_test = all_rows[:, 0:6]
+    # occupancy_day.print_table(max_rows=3000, max_columns=15)
 
-    y_pred_ent = clf_entropy.predict(x_test)
+
+    data_to_predict = test_data_occupancy_table.select(target_column_names)
+    all_rows = np.array([[value for value in row.values()] for row in data_to_predict.rows])
+
+    y_predictions = []
+
+    x_test = all_rows[:, 0:3]
+
+    for row in test_data_occupancy_table:
+        day = row[1]
+        clf_entropy_monday.predict(x_test)
+
+        # if (row[1] == 0):
+        #     y_predictions.append(clf_entropy_monday.predict(x_test))
+        # elif (row[1] == 1):
+        #     y_predictions.append(clf_entropy_tuesday.predict(x_test))
+        # elif (row[1] == 2):
+        #     y_predictions.append(clf_entropy_wednesday.predict(x_test))
+        # elif (row[1] == 3):
+        #     y_predictions.append(clf_entropy_thursday.predict(x_test))
+        # elif (row[1] == 4):
+        #     y_predictions.append(clf_entropy_friday.predict(x_test))
+        # elif (row[1] == 5):
+        #     y_predictions.append(clf_entropy_saturday.predict(x_test))
+        # elif (row[1] == 6):
+        #     y_predictions.append(clf_entropy_sunday.predict(x_test))
 
     # OCCUPANCY RATING:
     # 0 --> LOW
     # 1--> MEDIUM
     # 2--> HIGH
 
+    print(y_predictions)
     LOW_OCCUPANCY = 0
     MEDIUM_OCCUPANCY = 1
     HIGH_OCCUPANCY = 2
@@ -221,7 +256,7 @@ def predictTestData(clf_gini, clf_entropy):
     final_occupancies = []
     index = 0
 
-    for prediction in y_pred_ent:
+    for prediction in y_predictions:
         if (prediction == 'LOW'):
             temp_occupancy = LOW_OCCUPANCY
         elif (prediction == 'MEDIUM'):

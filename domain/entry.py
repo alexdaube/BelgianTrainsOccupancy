@@ -42,18 +42,22 @@ class Entry:
     def evaluate_day_period(self):
         # DAY PERIOD :
         # 0 -> early morning,
-        # 1 -> AM,
-        # 2 ->PM,
-        # 3 -> late_night
-        day_period = 3
-        if 3 <= self.datetime_object.hour < 6:
+        # 1 -> morning rushour
+        # 2 -> mid day hours,
+        # 3 -> afternoon rush
+        # 4 -> late night
+
+        day_period = 0
+        if 2 <= self.datetime_object.hour < 6:
             day_period = 0
-        elif 6 <= self.datetime_object.hour < 12:
+        elif 6 <= self.datetime_object.hour < 10:
             day_period = 1
-        elif 12 <= self.datetime_object.hour <= 22:
+        elif 10 <= self.datetime_object.hour < 15:
             day_period = 2
-        elif 3 > self.datetime_object.hour or self.datetime_object.hour > 22:
+        elif 15 <= self.datetime_object.hour < 19:
             day_period = 3
+        elif 19 <= self.datetime_object.hour <= 24 or 0 <= self.datetime_object.hour < 2:
+            day_period = 4
 
         return day_period
 
@@ -105,7 +109,6 @@ class Entry:
         if Weekday(self.weekday).value < 5:
             isWeekday = 1
 
-        return [isWeekday, self.day_zone,
+        return [self.day_zone,  Weekday(self.weekday).value,
                 self.entering_station.in_city, self.exiting_station.in_city,
-                self.in_morning_rush, self.in_evening_rush,
                 self.vehicle.type.value]
