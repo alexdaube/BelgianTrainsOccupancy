@@ -156,6 +156,9 @@ def trainTreeForSpecificDay(day):
     clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=6, min_samples_leaf=3)
     clf_gini.fit(x_train, y_train)
 
+    # Code to export .dot to pdf:
+    # dot -Tpdf iris.dot -o iris.pdf
+    
     clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=6, min_samples_leaf=3)
     clf_entropy.fit(x_train, y_train)
 
