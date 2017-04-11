@@ -226,22 +226,22 @@ def predictTestData(daily_trained_classifiers):
 
     for row in test_data_occupancy_table:
         day = row[1]
-        clf_entropy_monday.predict(x_test)
 
-        # if (row[1] == 0):
-        #     y_predictions.append(clf_entropy_monday.predict(x_test))
-        # elif (row[1] == 1):
-        #     y_predictions.append(clf_entropy_tuesday.predict(x_test))
-        # elif (row[1] == 2):
-        #     y_predictions.append(clf_entropy_wednesday.predict(x_test))
-        # elif (row[1] == 3):
-        #     y_predictions.append(clf_entropy_thursday.predict(x_test))
-        # elif (row[1] == 4):
-        #     y_predictions.append(clf_entropy_friday.predict(x_test))
-        # elif (row[1] == 5):
-        #     y_predictions.append(clf_entropy_saturday.predict(x_test))
-        # elif (row[1] == 6):
-        #     y_predictions.append(clf_entropy_sunday.predict(x_test))
+
+        if (row[1] == 0):
+            y_predictions.append(clf_entropy_monday.predict(x_test))
+        elif (row[1] == 1):
+            y_predictions.append(clf_entropy_tuesday.predict(x_test))
+        elif (row[1] == 2):
+            y_predictions.append(clf_entropy_wednesday.predict(x_test))
+        elif (row[1] == 3):
+            y_predictions.append(clf_entropy_thursday.predict(x_test))
+        elif (row[1] == 4):
+            y_predictions.append(clf_entropy_friday.predict(x_test))
+        elif (row[1] == 5):
+            y_predictions.append(clf_entropy_saturday.predict(x_test))
+        elif (row[1] == 6):
+            y_predictions.append(clf_entropy_sunday.predict(x_test))
 
     # OCCUPANCY RATING:
     # 0 --> LOW
