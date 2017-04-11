@@ -142,6 +142,11 @@ class Occupancy:
         occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
             self.occupancy_level).name
 
-        return [self.day_zone, Weekday(self.weekday).name,
+        fake_date = datetime(1999, 1, 1, self.date.hour, self.date.minute, 0, 0)
+
+        hours = (fake_date - fake_date.replace(hour=0, minute=0, second=0,
+                                               microsecond=0)).total_seconds() / 3600
+
+        return [hours, self.day_zone, Weekday(self.weekday).name,
                 self.entering_station.in_city, self.exiting_station.in_city,
                 self.vehicle.type.value, occupancy_level]

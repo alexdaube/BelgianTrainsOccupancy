@@ -124,10 +124,10 @@ def trainTreeForSpecificDay(day):
 
     occupancies = filter_erroneous(occupancies)
 
-    column_names = ['day_period', "weekday", "from_urban", "to_urban", "vehicle_type",
+    column_names = ['hour', 'day_period', "weekday", "from_urban", "to_urban", "vehicle_type",
                     "occupancy"]
 
-    column_types = [agate.Number(), agate.Text(), agate.Number(), agate.Number(),
+    column_types = [agate.Number(), agate.Number(), agate.Text(), agate.Number(), agate.Number(),
                     agate.Number(), agate.Text()]
 
     occupancy_attributes = []
@@ -136,7 +136,7 @@ def trainTreeForSpecificDay(day):
 
     occupancy_table = agate.Table(occupancy_attributes, column_names, column_types)
 
-    target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type",
+    target_column_names = ['hour', 'day_period', "from_urban", "to_urban", "vehicle_type",
                            "occupancy"]
 
     occupancy_day = occupancy_table.where(lambda row: day == row['weekday'])
@@ -148,8 +148,8 @@ def trainTreeForSpecificDay(day):
     # occupancy_daily.print_table(max_rows=3000, max_columns=15)
 
     all_rows = np.array([[value for value in row.values()] for row in occupancy_daily.rows])
-    x = all_rows[:, 0:3]
-    y = all_rows[:, 4]
+    x = all_rows[:, 0:4]
+    y = all_rows[:, 5]
 
     x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0, random_state=100)
 
@@ -159,12 +159,12 @@ def trainTreeForSpecificDay(day):
     clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=6, min_samples_leaf=3)
     clf_entropy.fit(x_train, y_train)
 
-    feature_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
+    feature_names = ['hour', 'day_period', "from_urban", "to_urban", "vehicle_type"]
     class_names = ['HIGH', 'LOW', 'MEDIUM']
 
     # Code to export .dot to pdf:
     # dot -Tpdf iris.dot -o iris.pdf
-    with open("iris.dot", 'w') as f:
+    with open("{day}_iris.dot".format(day=day), 'w') as f:
         f = tree.export_graphviz(clf_entropy, feature_names=feature_names, class_names=class_names, filled=True,
                                  out_file=f)
 
@@ -195,13 +195,12 @@ def predictTestData(daily_trained_classifiers):
     #                           'in_morning_rush', 'in_evening_rush',
     #                           "vehicle_type"
     #                           ]
-    test_data_column_names = ['day_period', 'weekday', 'from_urban', 'to_urban',
+    test_data_column_names = ['hour', 'day_period', 'weekday', 'from_urban', 'to_urban',
                               "vehicle_type"
                               ]
 
-    test_data_column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(),
-                              agate.Number(),
-                              ]
+    test_data_column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(),
+                              agate.Number()]
 
     test_list = []
 
@@ -212,32 +211,31 @@ def predictTestData(daily_trained_classifiers):
 
     test_data_occupancy_table.print_table(max_rows=3000, max_columns=15)
 
-    target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
+    target_column_names = ['hour', 'day_period', "from_urban", "to_urban", "vehicle_type"]
 
     # occupancy_day.print_table(max_rows=3000, max_columns=15)
-
 
     data_to_predict = test_data_occupancy_table.select(target_column_names)
     all_rows = np.array([[value for value in row.values()] for row in data_to_predict.rows])
 
     y_predictions = []
 
-    x_test = all_rows[:, 0:3]
+    x_test = all_rows[:, 0:4]
 
     for row in x_test:
-        if row[1] == 0:
+        if row[2] == 0:
             y_predictions.append(clf_entropy_monday.predict(row.reshape(1, -1)))
-        elif row[1] == 1:
+        elif row[2] == 1:
             y_predictions.append(clf_entropy_tuesday.predict(row.reshape(1, -1)))
-        elif row[1] == 2:
+        elif row[2] == 2:
             y_predictions.append(clf_entropy_wednesday.predict(row.reshape(1, -1)))
-        elif row[1] == 3:
+        elif row[2] == 3:
             y_predictions.append(clf_entropy_thursday.predict(row.reshape(1, -1)))
-        elif row[1] == 4:
+        elif row[2] == 4:
             y_predictions.append(clf_entropy_friday.predict(row.reshape(1, -1)))
-        elif row[1] == 5:
+        elif row[2] == 5:
             y_predictions.append(clf_entropy_saturday.predict(row.reshape(1, -1)))
-        elif row[1] == 6:
+        elif row[2] == 6:
             y_predictions.append(clf_entropy_sunday.predict(row.reshape(1, -1)))
 
     # OCCUPANCY RATING:
