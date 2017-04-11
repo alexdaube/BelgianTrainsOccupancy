@@ -88,18 +88,22 @@ class Occupancy:
     def evaluate_day_period(self):
         # DAY PERIOD :
         # 0 -> early morning,
-        # 1 -> AM,
-        # 2 ->PM,
-        # 3 -> late_night
-        day_period = 3
-        if 3 <= self.date.hour < 6:
+        # 1 -> morning rushour
+        # 2 -> mid day hours,
+        # 3 -> afternoon rush
+        # 4 -> late night
+
+        day_period = 0
+        if 0 <= self.date.hour < 6:
             day_period = 0
-        elif 6 <= self.date.hour < 12:
+        elif 6 <= self.date.hour < 10:
             day_period = 1
-        elif 12 <= self.date.hour <= 22:
+        elif 10 <= self.date.hour < 15:
             day_period = 2
-        elif 3 > self.date.hour or self.date.hour > 22:
+        elif 15 <= self.date.hour < 19:
             day_period = 3
+        elif 19 <= self.date.hour < 24:
+            day_period = 4
 
         return day_period
 
@@ -134,24 +138,10 @@ class Occupancy:
                 self.in_morning_rushhour, self.in_evening_rushhour,
                 self.vehicle.type.value, occupancy_level]
 
-    def to_attribute_list(self):
+    def to_numerical_attribute_list(self):
         occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
             self.occupancy_level).name
 
-        fake_date = datetime(1999, 1, 1, self.date.hour, self.date.minute, 0, 0)
-
-        if self.date.hour < 10:
-            hours = "0" + str(self.date.hour)
-        else:
-            hours = str(self.date.hour)
-
-        hours = (fake_date - fake_date.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds() / 3600
-
-        isWeekday = 0
-        if Weekday(self.weekday).value < 5:
-            isWeekday = 1
-
         return [self.day_zone, Weekday(self.weekday).name,
                 self.entering_station.in_city, self.exiting_station.in_city,
-                self.in_morning_rushhour, self.in_evening_rushhour,
                 self.vehicle.type.value, occupancy_level]

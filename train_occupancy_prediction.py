@@ -36,7 +36,20 @@ test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
 
 
 def main():
-    clf_gini, clf_entropy = trainTreeForSpecificDay('MONDAY')
+    days = ['MONDAY',
+            'TUESDAY',
+            'WEDNESDAY',
+            'THURSDAY',
+            'FRIDAY',
+            'SATURDAY',
+            'SUNDAY']
+
+    daily_decision_trees = []
+    for day in days:
+        daily_decision_trees.append(trainTreeForSpecificDay(day))
+
+    hell = '';
+    clf_gini, clf_entropy = trainTreeForSpecificDay('TUESDAY')
     # predictTestData(clf_gini, clf_entropy)
 
     # y_pred = clf_gini.predict(X_test)
@@ -69,7 +82,7 @@ def trainTree():
 
     level_column = ['occupancy']
     occupancy_level = occupancy_table.select(level_column)
-    # occupancy_level.print_table(max_rows=3000, max_columns=15)
+    occupancy_level.print_table(max_rows=3000, max_columns=15)
 
     occupancy_table.print_table(max_rows=3000, max_columns=15)
 
@@ -111,47 +124,42 @@ def trainTreeForSpecificDay(day):
 
     occupancies = filter_erroneous(occupancies)
 
-    column_names = ['day_period', "weekday", "from_urban", "to_urban", "in_morning_rush",
-                    "in_evening_rush", "vehicle_type",
+    column_names = ['day_period', "weekday", "from_urban", "to_urban", "vehicle_type",
                     "occupancy"]
 
-    column_types = [agate.Number(), agate.Text(), agate.Number(), agate.Number(), agate.Number(), agate.Number(),
+    column_types = [agate.Number(), agate.Text(), agate.Number(), agate.Number(),
                     agate.Number(), agate.Text()]
 
     occupancy_attributes = []
     for occupancy in occupancies:
-        occupancy_attributes.append(occupancy.to_attribute_list())
+        occupancy_attributes.append(occupancy.to_numerical_attribute_list())
 
     occupancy_table = agate.Table(occupancy_attributes, column_names, column_types)
 
-    level_column = ['occupancy']
-    target_column_names = ['day_period', "from_urban", "to_urban", "in_morning_rush",
-                           "in_evening_rush", "vehicle_type",
+    target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type",
                            "occupancy"]
-    occupancy_level = occupancy_table.select(level_column)
-    # occupancy_level.print_table(max_rows=3000, max_columns=15)
 
-    # occupancy_table.print_table(max_rows=3000, max_columns=15)
     occupancy_day = occupancy_table.where(lambda row: day == row['weekday'])
+
+    occupancy_day.print_table(max_rows=3000, max_columns=15)
 
     occupancy_daily = occupancy_day.select(target_column_names)
 
     occupancy_daily.print_table(max_rows=3000, max_columns=15)
 
     all_rows = np.array([[value for value in row.values()] for row in occupancy_daily.rows])
-    x = all_rows[:, 0:5]
-    y = all_rows[:, 6]
+    x = all_rows[:, 0:3]
+    y = all_rows[:, 4]
 
-    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=100)
+    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=100)
 
-    clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=5, min_samples_leaf=1)
+    clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=6, min_samples_leaf=3)
     clf_gini.fit(x_train, y_train)
 
-    clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=10, min_samples_leaf=5)
+    clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=6, min_samples_leaf=3)
     clf_entropy.fit(x_train, y_train)
 
-    feature_names = ['day_period', "from_urban", "to_urban", "in_morning_rush",
-                     "in_evening_rush", "vehicle_type"]
+    feature_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
     class_names = ['HIGH', 'LOW', 'MEDIUM']
 
     with open("iris.dot", 'w') as f:
