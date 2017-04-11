@@ -98,7 +98,7 @@ class Occupancy:
         entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
         exiting_station = self.exiting_station if self.exiting_station is None else self.exiting_station.number
         occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
-            self.occupancy_level).value
+            self.occupancy_level).name
 
         fake_date = datetime(1999, 1, 1, self.date.hour, self.date.minute, 0, 0)
 

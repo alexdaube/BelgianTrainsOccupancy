@@ -45,7 +45,7 @@ def main():
                     "occupancy"]
 
     column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(),
-                    agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number()]
+                    agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Text()]
 
     occupancies_list = []
     for occupancy in occupancies:
@@ -63,10 +63,19 @@ def main():
     x = all_rows[:, 0:10]
     y = all_rows[:, 10]
 
-    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.0, random_state=100)
+    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=100)
 
-    clf_gini = DecisionTreeClassifier(criterion="gini")
+    clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=3, min_samples_leaf=5)
     clf_gini.fit(x_train, y_train)
+
+    clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=3, min_samples_leaf=5)
+    clf_entropy.fit(x_train, y_train)
+
+    y_pred = clf_gini.predict(X_test)
+    y_pred_ent = clf_entropy.predict(X_test)
+    print("Accuracy GINI is ", accuracy_score(y_test, y_pred) * 100)
+
+    print("Accuracy ENTROPY is ", accuracy_score(y_test, y_pred_ent) * 100)
     hell = ""
 
 
