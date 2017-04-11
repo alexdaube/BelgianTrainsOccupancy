@@ -156,15 +156,14 @@ def trainTreeForSpecificDay(day):
     clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=6, min_samples_leaf=3)
     clf_gini.fit(x_train, y_train)
 
-    # Code to export .dot to pdf:
-    # dot -Tpdf iris.dot -o iris.pdf
-    
     clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=6, min_samples_leaf=3)
     clf_entropy.fit(x_train, y_train)
 
     feature_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
     class_names = ['HIGH', 'LOW', 'MEDIUM']
 
+    # Code to export .dot to pdf:
+    # dot -Tpdf iris.dot -o iris.pdf
     with open("iris.dot", 'w') as f:
         f = tree.export_graphviz(clf_entropy, feature_names=feature_names, class_names=class_names, filled=True,
                                  out_file=f)
