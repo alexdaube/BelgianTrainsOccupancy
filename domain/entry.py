@@ -96,3 +96,16 @@ class Entry:
                 self.in_morning_rush, self.in_evening_rush,
                 self.vehicle.number,
                 self.vehicle.type.name]
+
+    def to_attribute_list(self):
+        hours = (self.datetime_object - self.datetime_object.replace(hour=0, minute=0, second=0,
+                                                                     microsecond=0)).total_seconds() / 3600
+
+        isWeekday = 0
+        if Weekday(self.weekday).value < 5:
+            isWeekday = 1
+
+        return [isWeekday, self.day_zone,
+                self.entering_station.in_city, self.exiting_station.in_city,
+                self.in_morning_rush, self.in_evening_rush,
+                self.vehicle.type.value]
