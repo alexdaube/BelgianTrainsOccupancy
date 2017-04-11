@@ -222,20 +222,21 @@ def predictTestData(daily_trained_classifiers):
 
     x_test = all_rows[:, 0:4]
 
-    for row in x_test:
-        if row[2] == 0:
+    for index, row in enumerate(x_test):
+        current_day = test_data_occupancy_table[index][2]
+        if current_day == 0:
             y_predictions.append(clf_entropy_monday.predict(row.reshape(1, -1)))
-        elif row[2] == 1:
+        elif current_day == 1:
             y_predictions.append(clf_entropy_tuesday.predict(row.reshape(1, -1)))
-        elif row[2] == 2:
+        elif current_day == 2:
             y_predictions.append(clf_entropy_wednesday.predict(row.reshape(1, -1)))
-        elif row[2] == 3:
+        elif current_day == 3:
             y_predictions.append(clf_entropy_thursday.predict(row.reshape(1, -1)))
-        elif row[2] == 4:
+        elif current_day == 4:
             y_predictions.append(clf_entropy_friday.predict(row.reshape(1, -1)))
-        elif row[2] == 5:
+        elif current_day == 5:
             y_predictions.append(clf_entropy_saturday.predict(row.reshape(1, -1)))
-        elif row[2] == 6:
+        elif current_day == 6:
             y_predictions.append(clf_entropy_sunday.predict(row.reshape(1, -1)))
 
     # OCCUPANCY RATING:

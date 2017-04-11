@@ -123,7 +123,7 @@ node [shape=box, style="filled", color="black"] ;
 58 -> 60 ;
 61 [label="hour <= 22.75\nentropy = 0.8659\nsamples = 22\nvalue = [2, 18, 2]\nclass = LOW", fillcolor="#39e581cc"] ;
 53 -> 61 ;
-62 [label="hour <= 18.625\nentropy = 0.5907\nsamples = 19\nvalue = [1, 17, 1]\nclass = LOW", fillcolor="#39e581e3"] ;
+62 [label="day_period <= 3.5\nentropy = 0.5907\nsamples = 19\nvalue = [1, 17, 1]\nclass = LOW", fillcolor="#39e581e3"] ;
 61 -> 62 ;
 63 [label="entropy = 0.5436\nsamples = 8\nvalue = [0, 7, 1]\nclass = LOW", fillcolor="#39e581db"] ;
 62 -> 63 ;
