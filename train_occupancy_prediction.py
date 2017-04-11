@@ -224,24 +224,21 @@ def predictTestData(daily_trained_classifiers):
 
     x_test = all_rows[:, 0:3]
 
-    for row in test_data_occupancy_table:
-        day = row[1]
-
-
-        if (row[1] == 0):
-            y_predictions.append(clf_entropy_monday.predict(x_test))
-        elif (row[1] == 1):
-            y_predictions.append(clf_entropy_tuesday.predict(x_test))
-        elif (row[1] == 2):
-            y_predictions.append(clf_entropy_wednesday.predict(x_test))
-        elif (row[1] == 3):
-            y_predictions.append(clf_entropy_thursday.predict(x_test))
-        elif (row[1] == 4):
-            y_predictions.append(clf_entropy_friday.predict(x_test))
-        elif (row[1] == 5):
-            y_predictions.append(clf_entropy_saturday.predict(x_test))
-        elif (row[1] == 6):
-            y_predictions.append(clf_entropy_sunday.predict(x_test))
+    for row in x_test:
+        if row[1] == 0:
+            y_predictions.append(clf_entropy_monday.predict(row.reshape(1, -1)))
+        elif row[1] == 1:
+            y_predictions.append(clf_entropy_tuesday.predict(row.reshape(1, -1)))
+        elif row[1] == 2:
+            y_predictions.append(clf_entropy_wednesday.predict(row.reshape(1, -1)))
+        elif row[1] == 3:
+            y_predictions.append(clf_entropy_thursday.predict(row.reshape(1, -1)))
+        elif row[1] == 4:
+            y_predictions.append(clf_entropy_friday.predict(row.reshape(1, -1)))
+        elif row[1] == 5:
+            y_predictions.append(clf_entropy_saturday.predict(row.reshape(1, -1)))
+        elif row[1] == 6:
+            y_predictions.append(clf_entropy_sunday.predict(row.reshape(1, -1)))
 
     # OCCUPANCY RATING:
     # 0 --> LOW
@@ -257,11 +254,12 @@ def predictTestData(daily_trained_classifiers):
     index = 0
 
     for prediction in y_predictions:
-        if (prediction == 'LOW'):
+        temp_occupancy = 0
+        if prediction == 'LOW':
             temp_occupancy = LOW_OCCUPANCY
-        elif (prediction == 'MEDIUM'):
+        elif prediction == 'MEDIUM':
             temp_occupancy = MEDIUM_OCCUPANCY
-        elif (prediction == 'HIGH'):
+        elif prediction == 'HIGH':
             temp_occupancy = HIGH_OCCUPANCY
         final_occupancies.append([index, temp_occupancy])
         index += 1
