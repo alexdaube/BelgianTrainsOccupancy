@@ -131,10 +131,12 @@ def trainTreeForSpecificDay(day):
     occupancy_level = occupancy_table.select(level_column)
     # occupancy_level.print_table(max_rows=3000, max_columns=15)
 
-    occupancy_table.print_table(max_rows=3000, max_columns=15)
+    # occupancy_table.print_table(max_rows=3000, max_columns=15)
     occupancy_day = occupancy_table.where(lambda row: day == row['weekday'])
 
     occupancy_daily = occupancy_day.select(target_column_names)
+
+    occupancy_daily.print_table(max_rows=3000, max_columns=15)
 
     all_rows = np.array([[value for value in row.values()] for row in occupancy_daily.rows])
     x = all_rows[:, 0:5]
