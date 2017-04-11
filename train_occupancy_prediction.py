@@ -164,7 +164,7 @@ def trainTreeForSpecificDay(day):
 
     # Code to export .dot to pdf:
     # dot -Tpdf iris.dot -o iris.pdf
-    with open("iris.dot", 'w') as f:
+    with open("{day}_iris.dot".format(day=day), 'w') as f:
         f = tree.export_graphviz(clf_entropy, feature_names=feature_names, class_names=class_names, filled=True,
                                  out_file=f)
 
@@ -216,7 +216,6 @@ def predictTestData(daily_trained_classifiers):
 
     # occupancy_day.print_table(max_rows=3000, max_columns=15)
 
-
     data_to_predict = test_data_occupancy_table.select(target_column_names)
     all_rows = np.array([[value for value in row.values()] for row in data_to_predict.rows])
 
@@ -224,20 +223,21 @@ def predictTestData(daily_trained_classifiers):
 
     x_test = all_rows[:, 0:3]
 
-    for row in x_test:
-        if row[1] == 0:
+    for index, row in enumerate(x_test):
+        current_day = test_data_occupancy_table[index][1]
+        if current_day == 0:
             y_predictions.append(clf_entropy_monday.predict(row.reshape(1, -1)))
-        elif row[1] == 1:
+        elif current_day == 1:
             y_predictions.append(clf_entropy_tuesday.predict(row.reshape(1, -1)))
-        elif row[1] == 2:
+        elif current_day == 2:
             y_predictions.append(clf_entropy_wednesday.predict(row.reshape(1, -1)))
-        elif row[1] == 3:
+        elif current_day == 3:
             y_predictions.append(clf_entropy_thursday.predict(row.reshape(1, -1)))
-        elif row[1] == 4:
+        elif current_day == 4:
             y_predictions.append(clf_entropy_friday.predict(row.reshape(1, -1)))
-        elif row[1] == 5:
+        elif current_day == 5:
             y_predictions.append(clf_entropy_saturday.predict(row.reshape(1, -1)))
-        elif row[1] == 6:
+        elif current_day == 6:
             y_predictions.append(clf_entropy_sunday.predict(row.reshape(1, -1)))
 
     # OCCUPANCY RATING:
