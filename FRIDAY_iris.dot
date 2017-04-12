@@ -41,7 +41,7 @@ node [shape=box, style="filled", color="black"] ;
 18 -> 19 ;
 20 [label="entropy = 1.574\nsamples = 80\nvalue = [26, 23, 31]\nclass = MEDIUM", fillcolor="#8139e518"] ;
 18 -> 20 ;
-21 [label="hour <= 14.75\nentropy = 1.4956\nsamples = 213\nvalue = [107, 57, 49]\nclass = HIGH", fillcolor="#e5813952"] ;
+21 [label="day_period <= 2.5\nentropy = 1.4956\nsamples = 213\nvalue = [107, 57, 49]\nclass = HIGH", fillcolor="#e5813952"] ;
 5 -> 21 ;
 22 [label="from_urban <= 0.5\nentropy = 0.9799\nsamples = 12\nvalue = [7, 5, 0]\nclass = HIGH", fillcolor="#e5813949"] ;
 21 -> 22 ;
