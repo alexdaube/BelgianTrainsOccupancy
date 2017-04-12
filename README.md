@@ -1,4 +1,4 @@
 # BelgianTrainsOccupancy
 
 
-New Score after bug fix => 0.43623
+New Score after bug fix => 0.43689
