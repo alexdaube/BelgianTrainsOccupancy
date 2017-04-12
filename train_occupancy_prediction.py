@@ -153,10 +153,10 @@ def trainTreeForSpecificDay(day):
 
     x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0, random_state=100)
 
-    clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=6, min_samples_leaf=3)
+    clf_gini = DecisionTreeClassifier(criterion="gini", min_samples_leaf=4)
     clf_gini.fit(x_train, y_train)
 
-    clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=6, min_samples_leaf=3)
+    clf_entropy = DecisionTreeClassifier(criterion="entropy", min_samples_leaf=4)
     clf_entropy.fit(x_train, y_train)
 
     feature_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
@@ -210,7 +210,7 @@ def predictTestData(daily_trained_classifiers):
 
     test_data_occupancy_table = agate.Table(test_list, test_data_column_names, test_data_column_types)
 
-    test_data_occupancy_table.print_table(max_rows=3000, max_columns=15)
+    #test_data_occupancy_table.print_table(max_rows=3000, max_columns=15)
 
     target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
 
@@ -245,7 +245,7 @@ def predictTestData(daily_trained_classifiers):
     # 1--> MEDIUM
     # 2--> HIGH
 
-    print(y_predictions)
+    #print(y_predictions)
     LOW_OCCUPANCY = 0
     MEDIUM_OCCUPANCY = 1
     HIGH_OCCUPANCY = 2
@@ -268,7 +268,7 @@ def predictTestData(daily_trained_classifiers):
     columns_types = [agate.Number(), agate.Number()]
 
     results = agate.Table(final_occupancies, columns, columns_types)
-    results.print_table(max_rows=3000, max_columns=15)
+    #results.print_table(max_rows=3000, max_columns=15)
 
     results.to_csv('test_1.csv')
 
