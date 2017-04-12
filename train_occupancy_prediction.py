@@ -13,6 +13,7 @@ from sklearn.metrics import accuracy_score
 from sklearn import tree
 import numpy as np
 import agate
+import time
 
 OCCUPANCY_DATA_FILE = 'occupancy-until-20161029.newlinedelimitedjsonobjects'
 STATIONS_DATA_FILE = 'stations.csv'
@@ -45,10 +46,13 @@ def main():
             'SUNDAY']
 
     daily_decision_trees = []
+    t = time.process_time()
     for day in days:
         daily_decision_trees.append(trainTreeForSpecificDay(day))
+    elapsed_time = time.process_time() - t
 
     predictTestData(daily_decision_trees)
+    print(elapsed_time)
 
     # clf_gini, clf_entropy = trainTreeForSpecificDay('TUESDAY')
     # predictTestData(clf_gini, clf_entropy)
