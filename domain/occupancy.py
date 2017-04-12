@@ -41,6 +41,7 @@ class Occupancy:
         self.entering_station = self.assign_station(self.validate_post_data_field(occupancy_data, 'from'), stations)
         self.exiting_station = self.assign_station(self.validate_post_data_field(occupancy_data, 'to'), stations)
         self.vehicle = Vehicle(self.validate_post_data_field(occupancy_data, 'vehicle'))
+        self.day_zone = self.evaluate_day_period()
         self.occupancy_level = OccupancyLevel.assign_level_from_uri(
             self.validate_post_data_field(occupancy_data, 'occupancy'))
         self.unique_key = self.compose_unique_key()
@@ -51,7 +52,7 @@ class Occupancy:
     def assign_station(self, station_uri, stations):
         if station_uri is not None:
             station_id = strip_uri_last_element(station_uri)
-            return stations[station_id] if len(station_id) > 6 else None
+            return stations[station_id] if len(station_id) > 8 else None
         return station_uri
 
     def ceil_to_quarter(self, date):
@@ -69,9 +70,9 @@ class Occupancy:
         return self.date.strftime("%Y%m%d%H%M%S") + entering_station + existing_station + self.vehicle.number
 
     def evaluate_time(self, date):
-        morning_rushhour_start = 7
+        morning_rushhour_start = 6
         morning_rushhour_end = 9
-        evening_rushhour_start = 16
+        evening_rushhour_start = 15
         evening_rushhour_end = 19
 
         in_morning_rushhour = 0
@@ -84,6 +85,35 @@ class Occupancy:
 
         return in_morning_rushhour, in_evening_rushhour
 
+    def evaluate_day_period(self):
+        # DAY PERIOD :
+        # 0 -> early morning,
+        # 1 -> morning rushour
+        # 2 -> mid day hours,
+        # 3 -> afternoon rush
+        # 4 -> late night
+
+        day_period = 0
+
+        if 3 <= self.date.hour < 6:
+            day_period = 0
+        elif 6 <= self.date.hour < 10:
+            day_period = 1
+        elif 10 <= self.date.hour < 12:
+            day_period = 2
+        elif 12 <= self.date.hour < 15:
+            day_period = 3
+        elif 15 <= self.date.hour < 19:
+            day_period = 4
+        elif 19 <= self.date.hour < 22:
+            day_period = 5
+        elif 22 <= self.date.hour <= 24:
+            day_period = 6
+        elif 0 <= self.date.hour < 3:
+            day_period = 7
+
+        return day_period
+
     def print_data(self):
         entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
         exiting_station = self.exiting_station if self.exiting_station is None else self.exiting_station.number
@@ -94,7 +124,7 @@ class Occupancy:
                 self.date, Weekday(self.weekday).name, entering_station, self.entering_station.in_city, exiting_station,
                 self.exiting_station.in_city, self.vehicle.number, self.vehicle.type.name, occupancy_level))
 
-    def to_list(self):
+    def to_detailed_list(self):
         entering_station = self.entering_station if self.entering_station is None else self.entering_station.number
         exiting_station = self.exiting_station if self.exiting_station is None else self.exiting_station.number
         occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
@@ -107,8 +137,18 @@ class Occupancy:
         else:
             hours = str(self.date.hour)
 
-        return [fake_date, hours, Weekday(self.weekday).name,
+        seconds_since_midnight = (fake_date - fake_date.replace(hour=0, minute=0, second=0,
+                                                                microsecond=0)).total_seconds() / 3600
+
+        return [seconds_since_midnight, hours, Weekday(self.weekday).value,
                 entering_station, self.entering_station.in_city, exiting_station, self.exiting_station.in_city,
                 self.in_morning_rushhour, self.in_evening_rushhour,
-                self.vehicle.number,
-                self.vehicle.type.name, occupancy_level]
+                self.vehicle.type.value, occupancy_level]
+
+    def to_numerical_attribute_list(self):
+        occupancy_level = self.occupancy_level if self.occupancy_level is None else OccupancyLevel(
+            self.occupancy_level).name
+
+        return [self.day_zone, Weekday(self.weekday).name,
+                self.entering_station.in_city, self.exiting_station.in_city,
+                self.vehicle.type.value, occupancy_level]

@@ -28,7 +28,7 @@ class Entry:
         self.datetime_object = datetime.strptime(string_date, '%d %m %Y %I:%M:%S %p')
 
         self.weekday = self.date.weekday()
-
+        self.in_morning_rush, self.in_evening_rush = self.evaluate_time()
         self.day_zone = self.evaluate_day_period()
 
         # self.exiting_station = str(occupancy_data['from'])
@@ -42,18 +42,28 @@ class Entry:
     def evaluate_day_period(self):
         # DAY PERIOD :
         # 0 -> early morning,
-        # 1 -> AM,
-        # 2 ->PM,
-        # 3 -> late_night
-        day_period = 3
+        # 1 -> morning rushour
+        # 2 -> mid day hours,
+        # 3 -> afternoon rush
+        # 4 -> late night
+
+        day_period = 0
         if 3 <= self.datetime_object.hour < 6:
             day_period = 0
-        elif 6 <= self.datetime_object.hour < 12:
+        elif 6 <= self.datetime_object.hour < 8:
             day_period = 1
-        elif 12 <= self.datetime_object.hour <= 22:
+        elif 10 <= self.datetime_object.hour < 12:
             day_period = 2
-        elif 3 > self.datetime_object.hour or self.datetime_object.hour > 22:
+        elif 12 <= self.datetime_object.hour < 15:
             day_period = 3
+        elif 15 <= self.datetime_object.hour < 19:
+            day_period = 4
+        elif 19 <= self.datetime_object.hour < 22:
+            day_period = 5
+        elif 22 <= self.datetime_object.hour <= 24:
+            day_period = 6
+        elif 0 <= self.datetime_object.hour < 3:
+            day_period = 7
 
         return day_period
 
@@ -93,5 +103,18 @@ class Entry:
                 self.exiting_station.number,
                 self.entering_station.in_city, self.exiting_station.in_city,
                 self.day_zone,
+                self.in_morning_rush, self.in_evening_rush,
                 self.vehicle.number,
                 self.vehicle.type.name]
+
+    def to_attribute_list(self):
+        hours = (self.datetime_object - self.datetime_object.replace(hour=0, minute=0, second=0,
+                                                                     microsecond=0)).total_seconds() / 3600
+
+        isWeekday = 0
+        if Weekday(self.weekday).value < 5:
+            isWeekday = 1
+
+        return [self.day_zone,  Weekday(self.weekday).value,
+                self.entering_station.in_city, self.exiting_station.in_city,
+                self.vehicle.type.value]

@@ -1,253 +1,417 @@
 from algos.pre_processing import filter_duplicates, filter_erroneous
 from algos.statistics import *
-from algos.data_transformation import calculateRushHourConfidence
+from algos.data_transformation import *
 from domain.occupancy import Occupancy
 from domain.station import Station
+from domain.stationEntry import StationEntry
 from domain.city import City
 from domain.entry import Entry
 from utils.file_utils import parse_csv_file_to_list, parse_json_file_to_list
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
+from sklearn import tree
+import numpy as np
 import agate
+import time
 
 OCCUPANCY_DATA_FILE = 'occupancy-until-20161029.newlinedelimitedjsonobjects'
 STATIONS_DATA_FILE = 'stations.csv'
 OCCUPANCY_TEST_FILE = 'trains_test.csv'
 
+cities = [City("Brussels", 50.786350, 50.918930, 4.276428, 4.4991348),
+          City("Antwerp", 51.173693, 51.317015, 4.254456, 4.507141),
+          City("Ghent", 51.002832, 51.103832, 3.69072, 3.766251),
+          City("Charleroi", 50.403524, 50.418660, 4.434013, 4.457359),
+          City("Liège", 50.581055, 50.647440, 5.557022, 5.596504),
+          City("Bruges", 51.195129, 51.223843, 3.212128, 3.24337),
+          City("Namur", 50.461298, 50.470258, 4.848919, 4.878101),
+          City("Leuven", 50.867048, 50.890551, 4.681377, 4.716396),
+          City("Mons", 50.445013, 50.461189, 3.9382, 3.961773),
+          City("Aalst", 50.927354, 50.949854, 4.015331, 4.054985),
+          City("Lille", 50.615894, 50.651607, 3.028107, 3.08527)]
+
+occupancies_raw_data = parse_json_file_to_list(OCCUPANCY_DATA_FILE)
+stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
+test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
+
 
 def main():
+    days = ['MONDAY',
+            'TUESDAY',
+            'WEDNESDAY',
+            'THURSDAY',
+            'FRIDAY',
+            'SATURDAY',
+            'SUNDAY']
+
+    daily_decision_trees = []
+    t = time.process_time()
+    for day in days:
+        daily_decision_trees.append(trainTreeForSpecificDay(day))
+    elapsed_time = time.process_time() - t
+
+    predictTestData(daily_decision_trees)
+    print(elapsed_time)
+
+    # clf_gini, clf_entropy = trainTreeForSpecificDay('TUESDAY')
+    # predictTestData(clf_gini, clf_entropy)
+
+    # y_pred = clf_gini.predict(X_test)
+    # y_pred_ent = clf_entropy.predict(X_test)
+    # print("Accuracy GINI is ", accuracy_score(y_test, y_pred) * 100)
+
+    # print("Accuracy ENTROPY is ", accuracy_score(y_test, y_pred_ent) * 100)
+
+
+def trainTree():
+    stations = {station.number: station for station in
+                [Station(station_data, cities) for station_data in stations_raw_data]}
+    occupancies = [Occupancy(occupancy_data, stations) for occupancy_data in occupancies_raw_data]
+
+    occupancies = filter_duplicates(filter_erroneous(occupancies))
+
+    column_names = ['day_period', 'is_weekday', "from_urban", "to_urban", "in_morning_rush",
+                    "in_evening_rush", "vehicle_type",
+                    "occupancy"]
+
+    column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(), agate.Number(),
+                    agate.Number(), agate.Text()]
+
+    occupancy_attributes = []
+    for occupancy in occupancies:
+        occupancy_attributes.append(occupancy.to_attribute_list())
+
+    occupancy_table = agate.Table(occupancy_attributes, column_names, column_types)
+
+    level_column = ['occupancy']
+    occupancy_level = occupancy_table.select(level_column)
+    occupancy_level.print_table(max_rows=3000, max_columns=15)
+
+    occupancy_table.print_table(max_rows=3000, max_columns=15)
+
+    all_rows = np.array([[value for value in row.values()] for row in occupancy_table.rows])
+    x = all_rows[:, 0:6]
+    y = all_rows[:, 7]
+
+    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=100)
+
+    clf_gini = DecisionTreeClassifier(criterion="gini", max_depth=5, min_samples_leaf=1)
+    clf_gini.fit(x_train, y_train)
+
+    clf_entropy = DecisionTreeClassifier(criterion="entropy", max_depth=5, min_samples_leaf=2)
+    clf_entropy.fit(x_train, y_train)
+
+    feature_names = ['day_period', "from_urban", "to_urban", "in_morning_rush",
+                     "in_evening_rush", "vehicle_type"]
+    class_names = ['HIGH', 'LOW', 'MEDIUM']
+
+    with open("iris.dot", 'w') as f:
+        f = tree.export_graphviz(clf_entropy, feature_names=feature_names, class_names=class_names, filled=True,
+                                 out_file=f)
+
+    y_pred_ent = clf_entropy.predict(X_test)
+    print("Accuracy is ", accuracy_score(y_test, y_pred_ent) * 100)
+
+    return clf_gini, clf_entropy
+
+
+def trainTreeForSpecificDay(day):
     occupancies_raw_data = parse_json_file_to_list(OCCUPANCY_DATA_FILE)
+    stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
+    # test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
+
+
+    stations = {station.number: station for station in
+                [Station(station_data, cities) for station_data in stations_raw_data]}
+    occupancies = [Occupancy(occupancy_data, stations) for occupancy_data in occupancies_raw_data]
+
+    occupancies = filter_erroneous(occupancies)
+
+    column_names = ['day_period', "weekday", "from_urban", "to_urban", "vehicle_type",
+                    "occupancy"]
+
+    column_types = [agate.Number(), agate.Text(), agate.Number(), agate.Number(),
+                    agate.Number(), agate.Text()]
+
+    occupancy_attributes = []
+    for occupancy in occupancies:
+        occupancy_attributes.append(occupancy.to_numerical_attribute_list())
+
+    occupancy_table = agate.Table(occupancy_attributes, column_names, column_types)
+
+    target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type",
+                           "occupancy"]
+
+    occupancy_day = occupancy_table.where(lambda row: day == row['weekday'])
+
+    # occupancy_day.print_table(max_rows=3000, max_columns=15)
+
+    occupancy_daily = occupancy_day.select(target_column_names)
+
+    # occupancy_daily.print_table(max_rows=3000, max_columns=15)
+
+    all_rows = np.array([[value for value in row.values()] for row in occupancy_daily.rows])
+    x = all_rows[:, 0:3]
+    y = all_rows[:, 4]
+
+    x_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0, random_state=100)
+
+    clf_gini = DecisionTreeClassifier(criterion="gini", min_samples_leaf=4)
+    clf_gini.fit(x_train, y_train)
+
+    clf_entropy = DecisionTreeClassifier(criterion="entropy", min_samples_leaf=4)
+    clf_entropy.fit(x_train, y_train)
+
+    feature_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
+    class_names = ['HIGH', 'LOW', 'MEDIUM']
+
+    # Code to export .dot to pdf:
+    # dot -Tpdf iris.dot -o iris.pdf
+    with open("{day}_iris.dot".format(day=day), 'w') as f:
+        f = tree.export_graphviz(clf_entropy, feature_names=feature_names, class_names=class_names, filled=True,
+                                 out_file=f)
+
+    # y_pred_ent = clf_entropy.predict(X_test)
+    # print("Accuracy is ", accuracy_score(y_test, y_pred_ent) * 100)
+
+    return clf_gini, clf_entropy
+
+
+def predictTestData(daily_trained_classifiers):
+    clf_gini_monday, clf_entropy_monday = daily_trained_classifiers[0]
+    clf_gini_tuesday, clf_entropy_tuesday = daily_trained_classifiers[1]
+    clf_gini_wednesday, clf_entropy_wednesday = daily_trained_classifiers[2]
+    clf_gini_thursday, clf_entropy_thursday = daily_trained_classifiers[3]
+    clf_gini_friday, clf_entropy_friday = daily_trained_classifiers[4]
+    clf_gini_saturday, clf_entropy_saturday = daily_trained_classifiers[5]
+    clf_gini_sunday, clf_entropy_sunday = daily_trained_classifiers[6]
+
     stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
     test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
 
-    cities = [City("Brussels", 50.786350, 50.918930, 4.276428, 4.4991348),
-              City("Antwerp", 51.173693, 51.317015, 4.254456, 4.507141),
-              City("Ghent", 51.002832, 51.103832, 3.69072, 3.766251),
-              City("Charleroi", 50.403524, 50.418660, 4.434013, 4.457359),
-              City("Liège", 50.581055, 50.647440, 5.557022, 5.596504),
-              City("Bruges", 51.195129, 51.223843, 3.212128, 3.24337),
-              City("Namur", 50.461298, 50.470258, 4.848919, 4.878101),
-              City("Leuven", 50.867048, 50.890551, 4.681377, 4.716396),
-              City("Mons", 50.445013, 50.461189, 3.9382, 3.961773),
-              City("Aalst", 50.927354, 50.949854, 4.015331, 4.054985),
-              City("Lille", 50.615894, 50.651607, 3.028107, 3.08527)]
+    stations = {station.number: station for station in
+                [StationEntry(station_data, cities) for station_data in stations_raw_data]}
+
+    test_entries = [Entry(occupancy_data, stations) for occupancy_data in test_data_raw]
+    #
+    # test_data_column_names = ['is_weekday', 'day_period', 'from_urban', 'to_urban',
+    #                           'in_morning_rush', 'in_evening_rush',
+    #                           "vehicle_type"
+    #                           ]
+    test_data_column_names = ['day_period', 'weekday', 'from_urban', 'to_urban',
+                              "vehicle_type"
+                              ]
+
+    test_data_column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(),
+                              agate.Number(),
+                              ]
+
+    test_list = []
+
+    for occupancy in test_entries:
+        test_list.append(occupancy.to_attribute_list())
+
+    test_data_occupancy_table = agate.Table(test_list, test_data_column_names, test_data_column_types)
+
+    #test_data_occupancy_table.print_table(max_rows=3000, max_columns=15)
+
+    target_column_names = ['day_period', "from_urban", "to_urban", "vehicle_type"]
+
+    # occupancy_day.print_table(max_rows=3000, max_columns=15)
+
+    data_to_predict = test_data_occupancy_table.select(target_column_names)
+    all_rows = np.array([[value for value in row.values()] for row in data_to_predict.rows])
+
+    y_predictions = []
+
+    x_test = all_rows[:, 0:3]
+
+    for index, row in enumerate(x_test):
+        current_day = test_data_occupancy_table[index][1]
+        if current_day == 0:
+            y_predictions.append(clf_entropy_monday.predict(row.reshape(1, -1)))
+        elif current_day == 1:
+            y_predictions.append(clf_entropy_tuesday.predict(row.reshape(1, -1)))
+        elif current_day == 2:
+            y_predictions.append(clf_entropy_wednesday.predict(row.reshape(1, -1)))
+        elif current_day == 3:
+            y_predictions.append(clf_entropy_thursday.predict(row.reshape(1, -1)))
+        elif current_day == 4:
+            y_predictions.append(clf_entropy_friday.predict(row.reshape(1, -1)))
+        elif current_day == 5:
+            y_predictions.append(clf_entropy_saturday.predict(row.reshape(1, -1)))
+        elif current_day == 6:
+            y_predictions.append(clf_entropy_sunday.predict(row.reshape(1, -1)))
+
+    # OCCUPANCY RATING:
+    # 0 --> LOW
+    # 1--> MEDIUM
+    # 2--> HIGH
+
+    #print(y_predictions)
+    LOW_OCCUPANCY = 0
+    MEDIUM_OCCUPANCY = 1
+    HIGH_OCCUPANCY = 2
+
+    final_occupancies = []
+    index = 0
+
+    for prediction in y_predictions:
+        temp_occupancy = 0
+        if prediction == 'LOW':
+            temp_occupancy = LOW_OCCUPANCY
+        elif prediction == 'MEDIUM':
+            temp_occupancy = MEDIUM_OCCUPANCY
+        elif prediction == 'HIGH':
+            temp_occupancy = HIGH_OCCUPANCY
+        final_occupancies.append([index, temp_occupancy])
+        index += 1
+
+    columns = ['id', 'occupancy']
+    columns_types = [agate.Number(), agate.Number()]
+
+    results = agate.Table(final_occupancies, columns, columns_types)
+    #results.print_table(max_rows=3000, max_columns=15)
+
+    results.to_csv('test_1.csv')
+
+
+def predictData():
+    stations_raw_data = parse_csv_file_to_list(STATIONS_DATA_FILE)
+    test_data_raw = agate.Table.from_csv(OCCUPANCY_TEST_FILE)
 
     stations = {station.number: station for station in
                 [Station(station_data, cities) for station_data in stations_raw_data]}
 
     test_entries = [Entry(occupancy_data, stations) for occupancy_data in test_data_raw]
 
-    test_data_column_names = ['date', 'weekday', "from", "to", 'from_urban', 'to_urban', 'day_period', "vehicle",
-                              "vehicle_type",
+    test_data_column_names = ['hour', 'is_weekday', 'from_urban', 'to_urban',
+                              'in_morning_rush', 'in_evening_rush',
+                              "vehicle_type"
                               ]
 
-    test_data_column_types = [agate.DateTime(), agate.Text(), agate.Text(), agate.Text(),
-                              agate.Text(),
-                              agate.Text(),
-                              agate.Text(),
-                              agate.Text(),
-                              agate.Text()]
+    test_data_column_types = [agate.Number(), agate.Number(), agate.Number(), agate.Number(),
+                              agate.Number(),
+                              agate.Number(),
+                              agate.Number()
+                              ]
 
     test_list = []
 
     for occupancy in test_entries:
-        test_list.append(occupancy.to_list())
+        test_list.append(occupancy.to_attribute_list())
 
     test_data_occupancy_table = agate.Table(test_list, test_data_column_names, test_data_column_types)
-    test_data_occupancy_table.print_table(max_rows=1000, max_columns=15)
+    # test_data_occupancy_table.print_table(max_rows=1000, max_columns=15)
 
-    test_data_early_entries = test_data_occupancy_table.where(lambda row: 3 <= row['date'].hour < 6)
-    test_data_am_entries = test_data_occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
-    test_data_pm_entries = test_data_occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
-    test_data_late_entries = test_data_occupancy_table.where(lambda row: row['date'].hour < 3 or row['date'].hour > 22)
+    final_occupancies = []
 
+    # OCCUPANCY RATING:
+    # 0 --> LOW
+    # 1--> MEDIUM
+    # 2--> HIGH
 
+    LOW_OCCUPANCY = 0
+    MEDIUM_OCCUPANCY = 1
+    HIGH_OCCUPANCY = 2
 
-    # occupancies = [Occupancy(occupancy_data, stations) for occupancy_data in occupancies_raw_data]
-    #
-    # occupancies = filter_duplicates(filter_erroneous(occupancies))
-    #
-    # column_names = ['date', 'hour', 'weekday', "from", "from_urban", "to", "to_urban", "in_morning_rush",
-    #                 "in_evening_rush", "vehicle", "vehicle_type",
-    #                 "occupancy"]
-    #
-    # column_types = [agate.DateTime(), agate.Number(), agate.Text(), agate.Number(), agate.Number(), agate.Number(),
-    #                 agate.Number(), agate.Number(), agate.Number(), agate.Text(),
-    #                 agate.Text(),
-    #                 agate.Text()]
-    #
-    # occupancies_list = []
-    # for occupancy in occupancies:
-    #     occupancies_list.append(occupancy.to_list())
-    #
-    # occupancy_table = agate.Table(occupancies_list, column_names, column_types)
-    #
-    # occupancy_table.where(lambda row: row['weekday'] == 'WEDNESDAY' and row['in_morning_rush'] == 1).pivot('to_urban',
-    #                                                                                                        'occupancy').print_table()
-    # for x in occupancy_table.where(lambda row: row['weekday'] == 'WEDNESDAY' and row['in_morning_rush'] == 1).pivot(
-    #         'to_urban', 'occupancy'):
-    #     # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
-    #     count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-    #     print("Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2), '%', "MEDIUM:",
-    #           round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2), '%')
-    # # Type of trains
-    # # occupancy_table.pivot('vehicle_type').print_table()
-    # # for row in occupancy_table.pivot('vehicle_type'):
-    # #     print(row['vehicle_type'], " : ", round((row['Count'] / 2002) * 100, 2), "%")
-    #
-    #
-    #
-    # # occupancy_table.print_table(max_rows=3000, max_columns=15)
-    # # occupancy_table.where(lambda row: row['vehicle_type'] == 'L').pivot('vehicle_type', 'occupancy').print_table()
-    #
-    # # occupancy_table.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush', 'occupancy').print_table(max_rows=2000, max_columns=15)
-    #
-    # print(len(occupancy_table))
-    #
-    # print("Occupancy in both rush")
-    # #
-    # # occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
-    # #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('to_urban',
-    # #                                                                                    'occupancy').print_csv()
-    # # print("\n")
-    # #
-    # # occupancy_table.where(lambda row: 1 == row['in_morning_rush']).where(
-    # #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
-    # #                                                                                    'occupancy').print_csv()
-    # # print("\n")
-    # #
-    # # occupancy_table.where(lambda row: 1 == row['in_evening_rush']).where(
-    # #     lambda row: 'SATURDAY' != row['weekday'] and 'SUNDAY' != row['weekday']).pivot('from_urban',
-    # #                                                                                    'occupancy').print_csv()
-    # # print("\n")
-    # #
-    # # occupancy_table.where(lambda row: 'FRIDAY' == row['weekday']).pivot('from_urban', 'occupancy').print_csv()
-    # # print("\n")
-    # # occupancy_table.where(lambda row: 'SUNDAY' == row['weekday']).pivot('to_urban', 'occupancy').print_csv()
-    # #
-    # # print("\n")
-    #
-    # early_entries = occupancy_table.where(lambda row: 3 <= row['date'].hour < 6)
-    # am_entries = occupancy_table.where(lambda row: 6 <= row['date'].hour < 12)
-    # pm_entries = occupancy_table.where(lambda row: 12 <= row['date'].hour <= 22)
-    # late_entries = occupancy_table.where(lambda row: row['date'].hour < 3 or row['date'].hour > 22)
-    #
-    # print("\nAM entries")
-    # # by_vehicle = early_entries.pivot(['vehicle', 'occupancy']).print_table(max_rows=2000, max_columns=15)
-    #
-    # data = am_entries.pivot(['occupancy', 'vehicle']).order_by('vehicle')
-    # good = data.where(lambda row: row['Count'] > 6)
-    #
-    # good.print_table(max_rows=100, max_columns=15)
+    columns = ['id', 'occupancy']
+    columns_types = [agate.Number(), agate.Number()]
 
+    index = 0
 
+    for test_entry in test_data_occupancy_table:
+        if isEarlyMorning(test_entry):
+            if (isSunday(test_entry) or isMonday(test_entry)) and isGoingUrban(test_entry):
+                temp_occupency = HIGH_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
 
-    # # am_entries.pivot(['vehicle', 'occupancy'], computation=agate.Percent('Count')).order_by('vehicle').print_table(max_rows = 100, max_columns = 15)
-    #
-    # am_entries.pivot(['vehicle', 'occupancy']).order_by('vehicle').print_table(max_rows=100, max_columns=15)
-    # am_entries.pivot('vehicle', 'occupancy').order_by('vehicle').print_table(max_rows=100, max_columns=15)
-    #
-    # pm_entries.pivot(['vehicle', 'occupancy']).order_by('vehicle').print_table(max_rows=100, max_columns=15)
+        if isLateEvening(test_entry):
+            if isSunday(test_entry) and isGoingUrban(test_entry):
+                temp_occupency = HIGH_OCCUPANCY
+            if isMonday(test_entry) and isGoingUrban(test_entry) and isFromUrban(test_entry):
+                temp_occupency = MEDIUM_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
 
+        elif isBeforeNoon(test_entry):
+            if isWeekend(test_entry):
+                if isSunday(test_entry) and isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
 
-    #
-    # for x in by_vehicle:
-    #     # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
-    #     count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-    #     print(x["vehicle"], ":" "Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
+            elif isMorningRush(test_entry):
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    if isWednesday(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
 
-    #
-    # by_vehicle.print_table(max_rows=2000, max_columns=15)
-    # allo = data.columns['LOW']
-    #
-    #
-    # by_weekday = late_entries.pivot('weekday', 'occupancy')
-    #
-    # by_weekday.print_table()
-    # for x in by_weekday:
-    #     # print(x["weekday"], ":", round((x["Count"] / 2002) * 100, 2), "%")
-    #     count = x["HIGH"] + x["LOW"] + x["MEDIUM"]
-    #     print(x["weekday"], ":" "Count:", count, "HIGH:", round((x["HIGH"] / count) * 100, 2),'%', "MEDIUM:", round((x["MEDIUM"] / count) * 100, 2), '%', "LOW:", round((x["LOW"] / count) * 100, 2),'%')
+                elif isFromUrban(test_entry) and not isGoingUrban(test_entry):
+                    temp_occupency = LOW_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
 
-    # am_entries.where(lambda row: row['vehicle_type'] == 'L').pivot('in_morning_rush').print_table(
-    #     max_rows=2000, max_columns=15)
-    #
-    # rest_entries_night = occupancy_table.where(lambda row: 22 < row['date'].hour).where(
-    #     lambda row: 1 == row['to_urban']).where(lambda row: 0 == row['from_urban'])
-    # rest_entries_morning = occupancy_table.where(lambda row: row['date'].hour < 1).where(
-    #     lambda row: 1 == row['to_urban']).where(lambda row: 0 == row['from_urban'])
-    #
-    # rest_entries_night.pivot('weekday', 'occupancy').print_table()
-    # rest_entries_morning.pivot('weekday', 'occupancy').print_table()
-    #
-    # print("\nAM entries")
-    # am_entries.pivot('to_urban').print_table()
-    # am_entries.pivot('in_morning_rush', 'to_urban').print_table()
-    #
-    # print("\nPM entries")
-    # pm_entries.pivot('to_urban').print_table()
-    # pm_entries.pivot('in_evening_rush', 'to_urban').print_table()
+        elif isAfternoon(test_entry):
+            if isWeekend(test_entry):
+                if isSunday(test_entry) and isFromUrban(test_entry) and not isGoingUrban(test_entry):
+                    temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
 
+            elif isEveningRush(test_entry):
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    temp_occupency = HIGH_OCCUPANCY
 
+                elif isFromUrban(test_entry) and not isGoingUrban(test_entry):
+                    if isFriday(test_entry) or isMonday(test_entry) or isTuesday(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    elif isWednesday(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
 
-    # occupancy_table.pivot('in_evening_rush', 'to_urban').print_table()
+                elif isGoingUrban(test_entry) and not isFromUrban(test_entry):
+                    if isThursday(test_entry):
+                        temp_occupency = HIGH_OCCUPANCY
+                    elif isTuesday(test_entry) and isFriday(test_entry):
+                        temp_occupency = LOW_OCCUPANCY
+                    else:
+                        temp_occupency = MEDIUM_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
 
-    #
-    # print("\nOCCUPANCY BY VEHICLE_TYPE => \n")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "THA")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "IC")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "L")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "S")
-    # percent_occupancy_for_column(occupancy_table, 'vehicle_type', "P")
-    #
-    # print("\nOCCUPANCY BY WEEKDAY => \n")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "MONDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "TUESDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "WEDNESDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "THURSDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "FRIDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "SATURDAY")
-    # percent_occupancy_for_column(occupancy_table, 'weekday', "SUNDAY")
-    #
-    # g_by = occupancy_table.group_by("to")
-    # for t in g_by:
-    #     print("\n")
-    #     t.print_csv()
-    #
-    # # entries_per_day = occupancy_table.pivot(['weekday'])
-    # #git s
-    # monday_results = occupancy_table.where(lambda row: 'MONDAY' == row['weekday'])
-    # tuesday_results = occupancy_table.where(lambda row: 'TUESDAY' == row['weekday'])
-    # wednesday_results = occupancy_table.where(lambda row: 'WEDNESDAY' == row['weekday'])
-    # thursday_results = occupancy_table.where(lambda row: 'THURSDAY' == row['weekday'])
-    # friday_results = occupancy_table.where(lambda row: 'FRIDAY' == row['weekday'])
-    # saturday_results = occupancy_table.where(lambda row: 'SATURDAY' == row['weekday'])
-    # sunday_results = occupancy_table.where(lambda row: 'SUNDAY' == row['weekday'])
-    # #
-    # # # monday_results.order_by('date').print_table(max_rows=2000, max_columns=15)
-    # #
-    # # monday_results.group_by('occupancy').order_by('date').merge().print_table(max_rows=2000, max_columns=15)
-    #
-    # # Possible to inspect datetime object with lambda...
-    # new_table = monday_results.where(lambda row: 6 <= row['date'].hour <= 8)
-    #
-    # print("\n############MONDAY###############")
-    # analyzeDay(monday_results)
-    # print("\n############TUESDAY###############")
-    # analyzeDay(tuesday_results)
-    # print("\n############WEDNESDAY###############")
-    # analyzeDay(wednesday_results)
-    # print("\n############THURSDAY###############")
-    # analyzeDay(thursday_results)
-    # print("\n############FRIDAY###############")
-    # analyzeDay(friday_results)
-    # print("\n############SATURDAY###############")
-    # analyzeDay(saturday_results)
-    # print("\n############SUNDAY###############")
-    # analyzeDay(sunday_results)
-    # high_occ = monday_results.where(lambda row: 'HIGH' == row['occupancy'])
-    #
-    # low = monday_results.where(lambda row: 'LOW' == row['occupancy'])
-    # binned_hours = high_occ.bins('hour', 23, 0, 23).print_bars('hour', width=80)
-    # binned_hours2 = low.bins('hour', 23, 0, 23).print_bars('hour', width=80)
+            else:
+                if isFromUrban(test_entry) and isGoingUrban(test_entry):
+                    if isMonday(test_entry):
+                        temp_occupency = MEDIUM_OCCUPANCY
+                    else:
+                        temp_occupency = LOW_OCCUPANCY
+                else:
+                    temp_occupency = LOW_OCCUPANCY
+
+        elif isLateEvening(test_entry):
+            if isWednesday(test_entry) or isSunday(test_entry):
+                temp_occupency = HIGH_OCCUPANCY
+            elif isMonday(test_entry):
+                temp_occupency = MEDIUM_OCCUPANCY
+            else:
+                temp_occupency = LOW_OCCUPANCY
+        else:
+            temp_occupency = LOW_OCCUPANCY
+
+        final_occupancies.append([index, temp_occupency])
+        index += 1
+
+    results = agate.Table(final_occupancies, columns, columns_types)
+    results.print_table(max_rows=3000, max_columns=15)
+
+    results.to_csv('test_1.csv')
 
 
 def analyzeDay(daily_results):

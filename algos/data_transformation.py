@@ -1,3 +1,64 @@
+def isWeekend(row):
+    if row['weekday'] == 'SATURDAY' or row['weekday'] == 'SUNDAY':
+        return True
+    else:
+        return False
+
+def isMonday(row):
+    return row['weekday'] == 'MONDAY'
+
+def isSunday(row):
+    return row['weekday'] == 'SUNDAY'
+
+def isSaturday(row):
+    return row['weekday'] == 'SATURDAY'
+
+def isWednesday(row):
+    return row['weekday'] == 'WEDNESDAY'
+
+def isTuesday(row):
+    return row['weekday'] == 'TUESDAY'
+
+
+def isThursday(row):
+    return row['weekday'] == 'THURSDAY'
+
+
+def isFriday(row):
+    return row['weekday'] == 'FRIDAY'
+
+def isMorningRush(row):
+    return row['in_morning_rush'] == 1
+
+
+def isEveningRush(row):
+    return row['in_evening_rush'] == 1
+
+
+def isEarlyMorning(row):
+    return row['day_period'] == 0
+
+
+def isBeforeNoon(row):
+    return row['day_period'] == 1
+
+
+def isAfternoon(row):
+    return row['day_period'] == 2
+
+
+def isLateEvening(row):
+    return row['day_period'] == 3
+
+
+def isFromUrban(row):
+    return row['from_urban'] == 1
+
+
+def isGoingUrban(row):
+    return row['to_urban'] == 1
+
+
 def extractRushHourEntries(entries):
     morning_rushhour_start = 7
     morning_rushhour_end = 9
@@ -9,6 +70,7 @@ def extractRushHourEntries(entries):
             'date'].hour <= evening_rushhour_end)
 
     return entries_in_rushhour
+
 
 def calculateRushHourConfidence(occupancies):
     entries_in_rushhour = extractRushHourEntries(occupancies)
